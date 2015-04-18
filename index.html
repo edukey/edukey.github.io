@@ -10,10 +10,12 @@ Hello from github pages with jekyll.
 <br/>
 {{site.time}}
 <br/>
-pages : {{site.pages}}
+pages : {{site.pages.length}}
+<br/>
+page : dir name path url content
 <br/>
 {% for page in site.pages %}
-page {{forloop.index}} : {{page}}
+page {{forloop.index}} : {{page.url}}
 <br/>
 {% endfor %}
 </body>
