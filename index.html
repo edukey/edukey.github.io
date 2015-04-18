@@ -6,6 +6,15 @@
 <title>Test</title>
 </head>
 <body>
-Hello from github pages with jekyll. {{site.time}}
+Hello from github pages with jekyll. 
+<br/>
+{{site.time}}
+<br/>
+pages : {{site.pages}}
+<br/>
+{% for page in site.pages %}
+page {{forloop.index}} : {{page}}
+<br/>
+{% endfor %}
 </body>
 </html>
