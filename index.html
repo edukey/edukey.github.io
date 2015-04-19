@@ -22,8 +22,12 @@ page {{forloop.index}}/{{forloop.length}} : {{page.url}}
 data : {{site.data.stuff.hello}}
 <br/>
 {% for data in site.data.svc %}
-data {{forloop.index}}/{{forloop.length}} : {{data.code}}
+data {{forloop.index}}/{{forloop.length}} : {{data}}
 <br/>
+{% for kv in data %}
+- {{kv[0]}}={{kv[1]}}
+<br/>
+{% endfor %}
 {% endfor %}
 
 </body>
