@@ -15,10 +15,16 @@ pages : {{site.pages.length}}
 page : dir name path url content
 <br/>
 {% for page in site.pages %}
-page {{forloop.index}} : {{page.url}}
+page {{forloop.index}}/{{forloop.length}} : {{page.url}}
 <br/>
 {% endfor %}
 <br/>
 data : {{site.data.stuff.hello}}
+<br/>
+{% for data in site.data.svc %}
+data {{forloop.index}}/{{forloop.length}} : {{data.code}}
+<br/>
+{% endfor %}
+
 </body>
 </html>
