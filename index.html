@@ -21,11 +21,13 @@ page {{forloop.index}}/{{forloop.length}} : {{page.url}}
 <br/>
 data : {{site.data.stuff.hello}}
 <br/>
+{{site.data.svc.sample.label}}
+<br/>
 {% for kv in site.data.svc %}
 data {{forloop.index}}/{{forloop.length}} : {{kv[0]}} : {{kv[1].code}}
 <br/>
 {% for at in kv[1] %}
-- {{at}} : {{at[0]}}={{at[1]}}
+- {{at[0]}}={{at[1]}}
 <br/>
 {% endfor %}
 {% endfor %}
