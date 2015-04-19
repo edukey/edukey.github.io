@@ -25,7 +25,7 @@ data : {{site.data.stuff.hello}}
 data {{forloop.index}}/{{forloop.length}} : {{data}}
 <br/>
 {% for kv in data %}
-- {{kv[0]}}={{kv[1]}}
+- {{kv}} : {{kv[0]}}={{kv[1]}}
 <br/>
 {% endfor %}
 {% endfor %}
