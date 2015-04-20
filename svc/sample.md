@@ -1,6 +1,7 @@
 ---
 # yaml frontmatter for jekyll processing
 layout: svc.html
+title: Sample Service
 svc:
   code: sample
   label: Sample Service
@@ -11,4 +12,4 @@ svc:
   domain: tech
 ---
 
-Here is full markdown description of the service "{{page.data.svc.label}}"
+Here is full markdown description of the service "{{page.svc.label}}"
