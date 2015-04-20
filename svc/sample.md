@@ -1,6 +1,6 @@
 ---
 # yaml frontmatter for jekyll processing
-layout: svc.html
+layout: svc
 title: Sample Service
 svc:
   code: sample
