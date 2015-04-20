@@ -4,8 +4,11 @@ layout: svc.html
 svc:
   code: sample
   label: Sample Service
-  description: this is a sample service
+  description: 
+    this is a sample service
+    blablabla
+    bli bli bli
   domain: tech
 ---
 
-Here is full markdown description of the service
+Here is full markdown description of the service "{{page.data.svc.label}}"
