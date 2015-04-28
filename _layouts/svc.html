@@ -1,7 +1,13 @@
 ---
 ---
 {% include header.html  %}
-hello from layout {{page.layout}}
-<br/>
+<hr/>
+hello from layout {{page.layout}}<br/>
+{% assign svc = site.data.svc[page.item] %}
+code : "{{svc.code}}"<br/>
+label : "{{svc.label}}"<br/>
+description : "{{svc.description}}"<br/>
+<hr/>
 {{content}}
+<hr/>
 {% include footer.html  %}
