@@ -8,10 +8,15 @@ bstyles: [solid, dashed, dotted, double, groove, inset, outset, ridge]
     </style>
   </head>
 <body>  
+<pre>div { width:100px; height:30px; border:solid 2px gray; border-radius:5px; margin:10px; }</pre>
+
 {% for s in page.bstyles %}
-<div style="border:{{s}} 2px black"></div>
+<div style="border:{{s}} 2px black">{{s}}</div>
 {% endfor %}
 
-<div style="box-shadow: 10px 10px 10px black"></div>
+<div style="box-shadow:10px 10px 10px black; text-shadow:5px 5px 5px black;">
+  box-shadow: 10px 10px 10px black; 
+  text-shadow:5px  5px 5px #000000;
+</div>
 </body>
 </html>
