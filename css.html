@@ -5,7 +5,7 @@ bstyles: [solid, dashed, dotted, double, groove, inset, outset, ridge]
 <head>
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 <style>
-div {border:solid 2px gray; border-radius:5px; margin:10px; text-align:center; vertical-align: middle;}
+div {width:200px; border:solid 2px gray; border-radius:5px; margin:10px; text-align:center; vertical-align: middle;}
 @font-face{ font-family:'myFA';font-weight:normal;font-style:normal;
   src:url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.eot?v=4.3.0');
   src:url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'),
@@ -54,7 +54,7 @@ current, borne back ceaselessly into the past.
 
 <div style="font-family:myFA">
 {% for i in (1..10) %}
-<i>&{{i}};</i>
+<i>&#{{i}};</i>
 {% endfor %}
 </div>
 
