@@ -6,10 +6,10 @@ bstyles: [solid, dashed, dotted, double, groove, inset, outset, ridge]
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 <style>
 div {width:200px; border:solid 2px gray; border-radius:5px; margin:10px; text-align:center; vertical-align: middle;}
+/*
 @font-face{ font-family:'myFA';font-weight:normal;font-style:normal;
   src:url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.eot?v=4.3.0');
  }
-/*
   src:
    url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'),
    url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'),
@@ -44,9 +44,9 @@ div {width:200px; border:solid 2px gray; border-radius:5px; margin:10px; text-al
 <i class="fa fa-camera-retro fa-5x"></i> fa-5x
 <br/>
 <i class="fa fa-quote-left fa-3x pull-left fa-border"></i>
-...tomorrow we will run faster, stretch out our arms farther...
-And then one fine morning— So we beat on, boats against the
-current, borne back ceaselessly into the past.
+...tomorrow we will run faster, stretch out our arms farther...<br/>
+And then one fine morning— So we beat on, boats against the<br/>
+current, borne back ceaselessly into the past.<br/>
 <br/>
 
 <i class="fa fa-spinner fa-spin"></i>
@@ -55,7 +55,7 @@ current, borne back ceaselessly into the past.
 <i class="fa fa-cog fa-spin"></i>
 <i class="fa fa-spinner fa-pulse"></i>
 
-<p style="font-family:myFA">{% for i in (0..511) %}&#{{i}};{% endfor %}</p>
+<p style="font-family:FontAwesome">{% for i in (0..511) %}&#{{i}};{% endfor %}</p>
 <p>{% for i in (0..511) %}&#{{i}};{% endfor %}</p>
 
 </body>
