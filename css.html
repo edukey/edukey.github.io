@@ -8,13 +8,15 @@ bstyles: [solid, dashed, dotted, double, groove, inset, outset, ridge]
 div {width:200px; border:solid 2px gray; border-radius:5px; margin:10px; text-align:center; vertical-align: middle;}
 @font-face{ font-family:'myFA';font-weight:normal;font-style:normal;
   src:url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.eot?v=4.3.0');
+ }
+/*
   src:
    url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.eot?#iefix&v=4.3.0') format('embedded-opentype'),
    url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.woff2?v=4.3.0') format('woff2'),
    url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.woff?v=4.3.0') format('woff'),
    url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.ttf?v=4.3.0') format('truetype'),
    url('//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/fonts/fontawesome-webfont.svg?v=4.3.0#fontawesomeregular') format('svg');
-}
+*/
 </style>
 </head>
 <body>  
@@ -53,17 +55,8 @@ current, borne back ceaselessly into the past.
 <i class="fa fa-cog fa-spin"></i>
 <i class="fa fa-spinner fa-pulse"></i>
 
-<div style="font-family:myFA">
-{% for i in (1..255) %}
-<i>&#{{i}};</i>
-{% endfor %}
-</div>
-
-<div>
-{% for i in (1..255) %}
-<i>&#{{i}};</i>
-{% endfor %}
-</div>
+<p style="font-family:myFA">{% for i in (0..511) %}&#{{i}};{% endfor %}</p>
+<p>{% for i in (0..511) %}&#{{i}};{% endfor %}</p>
 
 </body>
 </html>
