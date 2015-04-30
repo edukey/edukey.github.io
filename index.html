@@ -15,8 +15,14 @@ pages : {{site.pages.length}}
 page : dir name path url content
 <br/>
 {% for page in site.pages %}
-page {{forloop.index}}/{{forloop.length}} : <a href="{{page.url}}">{{page.url}}</a>
+page {{forloop.index}}/{{forloop.length}} : <a href="{{page.url}}">{{page.url}}</a><br/>
+{% endfor %}
 <br/>
+{% for kv in site.data %}
+data {{forloop.index}}/{{forloop.length}} : {{kv[0]}}<br/>
+{% for kvs in kv[1] %}
+ - data {{forloop.index}}/{{forloop.length}} : {{kvs[0]}}<br/>
+{% endfor %}
 {% endfor %}
 <br/>
 data : {{site.data.stuff.hello}}
