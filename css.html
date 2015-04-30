@@ -1,9 +1,17 @@
 ---
 bstyles: [solid, dashed, dotted, double, groove, inset, outset, ridge]
 ---
-
+<html>
+  <head>
+    <style>
+      div { width:100px; height:30px; border:solid 2px gray; border-radius:5px; margin:10px; }
+    </style>
+  </head>
+<body>  
 {% for s in page.bstyles %}
-<div style="width:100px; height:30px; border:{{s}} 2px black; border-radius:5px"></div>
+<div style="border:{{s}} 2px black"></div>
 {% endfor %}
 
-<div style="width:100px; height:30px; border:solid 2px gray; border-radius:5px; box-shadow: 10px 10px 10px black"></div>
+<div style="box-shadow: 10px 10px 10px black"></div>
+</body>
+</html>
