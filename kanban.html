@@ -1,0 +1,84 @@
+<html>
+<head>
+<style>
+body { font-family: Verdana; font-size:9pt; }
+div#kan { width:100%; height:500px; }
+div.ticket, div.colname { position:absolute; width:175; padding: 3px; border:1px solid gray; }
+div.ticket { height:45; }
+div.colname { height:20; background:red; color:white; text-align:center; border-color:red; }
+div.ticket:hover { box-shadow: 2px 2px 2px gray }
+</style>
+<script>
+//-- js helpers
+//-- dom helpers
+function gid(id) { return document.getElementById(id) }
+//-- data helpers
+// load a textarea content as blank separated values into array of objects
+// first row is header
+function loadtab(id) { 
+	var src=gid(id).value
+	var ligs=src.split('\n')
+	var fields=ligs[0].split(/ +/)
+	var tab=[]
+	for(var i=1; i<ligs.length; i++) {
+		var l=ligs[i]
+		if(!l) continue
+		var v=l.split(/ +/)
+		if(v.length==0) continue
+		var obj={}
+		for(var j=0; j<fields.length; j++) {
+			obj[fields[j]]=v[j]
+		}
+		tab.push(obj)
+	}
+	return tab
+}
+// convert an array into a dico
+function tab2dic(tab,key) {
+ var dic={}
+ for(var i=0;i<tab.length;i++) {
+ 	var row=tab[i]
+ 	if(!(row[key] in dic)) dic[row[key]]=[]
+ 	dic[row[key]].push(row)
+ }
+ return dic
+}
+//-- program
+function init() {
+	var kan=gid('kan')
+	var tits=['others','backlog','ready','assigned','done','closed']
+	var cols=tab2dic(loadtab('src'),'col')
+	var h=''
+	var x=10
+	for(var i=0; i<tits.length; i++) {
+		h+='<div class="colname" style="top:0;left:'+x+'">'+tits[i]+'</div>'
+		var y=30
+		for(var j=0; j<cols[tits[i]].length; j++) {
+			var ticket=cols[tits[i]][j]
+			h+='<div class="ticket" style="top:'+y+';left:'+x+'"><i>'+ticket.type+'</i> "'+ticket.label+'"</div>'
+			y+=55
+		}
+		x+=190
+	}
+	gid('kan').innerHTML=h
+}
+</script>
+</head>
+<body onload="init()">
+<div id='kan'></div>
+<textarea id='src' cols='120' rows='20'>
+col      date                repo id user type label
+others   2016-11-12T14:15:10 app  1  john bug  lalala
+others   2016-11-12T14:15:10 app  2  mike evol lilili
+others   2016-11-12T14:15:10 api  1  leon task lololo
+backlog  2016-11-12T14:15:10 app  3  john new  mememe
+backlog  2016-11-12T14:15:10 api  1  john new  mumumu
+ready    2016-11-12T14:15:10 app  4  leon bug  nenene
+ready    2016-11-12T14:15:10 app  5  mike bug  nanana
+assigned 2016-11-12T14:15:10 app  6  leon evol jujuju
+done     2016-11-12T14:15:10 app  7  john task popopo
+closed   2016-11-12T14:15:10 api  2  mike new  dididi
+
+</textarea>
+</body>
+</html>
