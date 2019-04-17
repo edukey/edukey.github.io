@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+function parseSeqLine(mod, line) {
+	var idx=line.indexOf(' ')
+	var id=line.substr(0, idx)
+	var dsc=line.substr(idx+1)
+
+	var sep=''
+	if(id.indexOf('-')>0) sep='-'
+	if(id.indexOf('.')>0) sep='.'
+	if(!sep) { //-- node definition
+		var col='black'
+		var idx=dsc.indexOf(' ; ')
+		if(idx>0) { // args are present
+			var t_args=dsc.substr(idx+3)
+			dsc=dsc.substr(0,idx)
+			var args=t_args.split(' ')
+			for(var arg of args) {
+				var kv=arg.split(':')
+				if(kv[0]=='color') col=kv[1]
+			}
+		}
+		mod.nodes[id]={dsc:dsc,col:col}
+	}
+	if(sep) { // flows
+		var se=id.split(sep)
+		if(!(se[0] in mod.nodes)) console.log('invalid node from',se[0])
+		if(se[1] && !(se[1] in mod.nodes)) console.log('invalid node to',se[1])
+		mod.flows.push({from:se[0],to:se[1],dsc:dsc,is_reply:(sep=='.')})
+	}			
+}
+function parseReqLine(req, line) {
+	if(line.charAt(0)==' ') {
+		req.dsc.push(line.substr(1))
+	}
+	else {
+		req.http.push(line)
+	}
+}
+function txtToModel(txt) {
+	var mods=[]
+	var cur_mod=null
+	var cur_req=null
+	var lines=txt.split('\n')
+	var state='seq'
+	for(var line of lines) {
+		if(line.length==0) continue
+		if(line.charAt(0)=='#') continue
+		if(line.indexOf('Title: ')==0) {
+			cur_mod={title:line.substr(7), nodes:{}, flows:[], reqs:[]}
+			mods.push(cur_mod)
+			state='seq'
+			continue
+		}
+		if(line.indexOf('Req: ')==0) {
+			state='req'
+			cur_req={title:line.substr(5),dsc:[],http:[]}
+			cur_mod.reqs.push(cur_req)
+			continue
+		}
+		if(state=='seq') {
+			parseSeqLine(cur_mod, line)
+		}
+		if(state=='req') {
+			parseReqLine(cur_req, line)
+		}
+	}
+	return mods
+}
+function buildSvg(mod) {
+	var s=''
+	var x=50
+	var nw=120
+	var nh=50
+	s+='<marker id="triangle" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto">'
+    s+='  <path d="M 0 0 L 10 5 L 0 10 z" fill="gray"/>'
+    s+='</marker>'
+    //s+='<rect x=0 y=0 width="100%" height="100%" style="fill:rgb(240,240,240)"/>'
+	for(var node_id in mod.nodes) {
+		var mx=(x+nw/2)
+		mod.nodes[node_id].mx=mx
+		s+='<rect x='+x+' y=0 width='+nw+' height='+nh+' rx=10 ry=10 style="fill:'+mod.nodes[node_id].col+'"/>'
+		s+='<text x='+mx+' y='+(nh/2)+' text-anchor="middle" fill="white">'+mod.nodes[node_id].dsc+'</text>'
+		s+='<line x1='+mx+' y1='+nh+' x2='+mx+' y2=100% style="stroke:lightgray"/>'
+		x+=nw+50
+	}
+	var y=90
+	for(var flow of mod.flows) {
+		var x1=mod.nodes[flow.from].mx
+		var mx=x1
+		if(flow.to) {
+			var x2=mod.nodes[flow.to].mx
+			s+='<line x1='+x1+' y1='+y+' x2='+x2+' y2='+y+' marker-end="url(#triangle)" stroke="gray" stroke-width="2"'+
+				(flow.is_reply?' stroke-dasharray="4"':'')+'/>'
+			mx=(x2>x1)?x1+(x2-x1)/2:x2+(x1-x2)/2 // middle of the line for text
+		}
+		s+='<text x='+mx+' y='+(y-10)+' text-anchor="middle" fill="black">'+flow.dsc+'</text>'
+		y+=40
+	}
+	s+='</svg>'
+	s='<svg width="'+x+'" height="'+y+'">'+s
+	return s
+}
+function buildReqs(reqs) {
+	var h=''
+	for(var req of reqs) {
+		h+='<h2>'+req.title+'</h2>'
+		for(var d of req.dsc) {
+			h+=d+'<br/>'
+		}
+		h+='<pre>'
+		for(var t of req.http) {
+			h+=t+'\n'
+		}
+		h+='</pre>'
+	}
+	return h
+}
+function buildAll(mods) {
+	var h='<table>'
+	for(var mod of mods) {
+		h+='<tr><td colspan=2><h1>'+mod.title+'</h1></td></tr>'
+		h+='<tr>'
+		h+='<td>'+buildSvg(mod)+'</td>'
+		h+='<td>'+buildReqs(mod.reqs)+'</td>'
+		h+='</tr>'
+	}	
+	h+='</table>'
+	return h
+}
+function do_draw() {
+	var t=document.getElementById('txt').value
+	var mods=txtToModel(t)
+	console.log(mods)
+	document.getElementById('main').innerHTML=buildAll(mods)
+}
+function do_init() {
+	do_draw()
+}
+</script>
+<style>
+* { font-family: Verdana; font-size: 11pt; }
+pre { font-family: Consolas; font-size: 10pt; }
+</style>
+</head>
+<body onload="do_init()">
+<div id="main">
+</div>
+<!--
+<svg id="svg_main" width="100%" height="800">
+    <marker id="triangle" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="gray"/>
+    </marker>
+    <rect x=0 y=0 width="100%" height="100%" style="fill:rgb(240,240,240)"/>
+	<g id="svg">
+		<rect x=0 y=0 width=200 height=100 rx=20 ry=20 style="fill:gray"/>
+		<text x=100 y=50 text-anchor="middle" fill="black">Hello world</text>
+		<line x1=100 y1=200 x2=200 y2=200 marker-end="url(#triangle)" stroke="black" stroke-width="3"/>
+		<line x1=100 y1=100 x2=100 y2=1000 style="stroke:black"/>
+	</g>
+</svg>
+<br/>
+-->
+<textarea id="txt" cols="50" rows="20">
+# this is a comment line
+
+Title: Implicit as usual
+
+AB Browser A ; color:blue
+AP Static Server A ; color:blue
+AS Auth Server A ; color:blue
+AA API A ; color:blue
+
+AB-AP 1. Load webapp
+AP.AB 1r. HTML+Js
+AB- Js detects no token
+AB-AS 2. switch to AS
+AS.AB 2r. AS redirects to webapp
+AB-AP 3. Reload webapp with AS data
+AP.AB 3r. HTML+JS
+AB- Js gets AT_A from url
+AB- AT_A put in local-storage
+AB-AA 4. Call API with AT_A
+AA-AS 5. Verify token and get info
+AS.AA 5r. client_id, scope, ttl
+AA-AS 6. Retrieve user info
+AS.AA 6r. email, ...
+AA.AB 4r. data
+
+Req: 1. Load webapp first
+ Get a page, there is no token context yet in current Browser for this web app.
+ The page runs a Js code that checks token context and will switch to AS if none.
+
+GET https://app-a/index.html
+200 OK
+	...html...
+
+Req: 2. Switch to AS for user auth
+ The Js code switches current window to AS login page, so app unloads itself.
+ Js code specifies to AS that it wishes to call API_A with this token.
+ To do so here it uses a scope, but other ways may be possible.
+ The AS potentially do a lot of interactions with the end user, 
+ but ultimately replies a redirect to the browser with params in hash part.
+
+GET https://as-a/authorize?grant_type=implicit&amp;client_id=AppA&amp;scope=open_id+API_A&amp;redirect_uri=...
+302 Redirect
+	Location: https://app-a/index.html#access_token=AT_A&amp;id_token=JWT_A
+
+Req: 3. Reload webapp with AS params
+ Browser reload the webapp.
+ Js code checks url hash part and detects data provided by the AS.
+ Js code stores this information in local storage and continues with webapp loading.
+
+GET https://app-a/index.html#access_token=AT_A&amp;id_token=JWT_A&amp;...
+200 OK
+	...html...
+
+Req: 4. Call API with token
+
+GET https://api-a/foo
+	Authorization: Bearer AT_A
+200 OK
+	{ ...data... }
+
+Req: 5. API verifies token
+
+GET https://as-a/tokeninfo?token=AT_A
+200 OK
+	{ client_id:AppA, scope:API_A }
+
+Req: 6. API retrieves user info
+
+GET https://as-a/userinfo?token=AT_A
+200 OK
+	{ email:jo.doe@sg }
+
+Title: Auth code as usual
+
+AB Browser A ; color:blue
+AS Auth Server A ; color:blue
+AP App Server A ; color:blue
+
+AB-AP App-A/index.html no cookie
+AP.AB REDIRECT AS-A/authorize?...
+AB-AS AS-A/authorize?client_id=AppA&amp;...
+AS.AB REDIRECT App-A/index.html?code=c
+AB-AP App-A/index.html?code=c
+AP-AS AS-A/access_token?code=c
+AS.AP OK {access_token:AT_A, id_token:JWT_A, ...}
+AP.AB OK Set-Cookie:CKY_A ; HTML
+
+Title: Auth code SPA without server : weird stuff
+
+AB Browser A ; color:blue
+AP Static Server A ; color:blue
+AS Auth Server A ; color:blue
+AA API A ; color:blue
+
+AB-AP GET App-A/index.html
+AP.AB OK HTML+Js
+AB- Js detects no token
+AB-AS GET AS-A/authorize?client_id=AppA&amp;scope=API_A...
+AS.AB REDIRECT App-A/index.html?code=c
+AB-AP GET App-A/index.html?code=c
+AP.AB OK HTML+JS
+AB- Js gets code from url
+AB-AS GET AS-A/access_token?code=c ; Auth.: AppA:csec_AppA
+AS.AB OK {access_token:AT_A, id_token:JWT_A, ...}
+AB- Js put AT_A in local-storage
+AB-AA GET API-A/foo ; Auth.: AT_A
+AA-AS GET AS-A/tokeninfo?token=AT_A
+AS.AA OK {client_id:AppA, scope:API_A}
+AA-AS GET AS-A/userinfo?token=AT_A
+AS.AA OK {email:jo.doe@sg}
+AA.AB OK {...}
+
+Title: Win Desktop App with authcode and PKCE
+
+AB NativeApp A ; color:blue
+BR System Browser ; color:gray
+AS Auth Server A ; color:blue
+AA API A ; color:blue
+
+AB- listen on a local dyn port
+AB-BR Spawn browser to AS-A
+BR-AS GET AS-A/authorize?client_id=AppA&amp;redirect=localhost:4321
+AS.BR REDIRECT localhost:4321?code=c
+BR-AB localhost:4321?code=c
+AB-BR Close browser
+AB-AS GET AS-A/access_token?code=c ; Auth.: AppA:csec_AppA
+AS.AB OK {access_token:AT_A, id_token:JWT_A, ...}
+AB-AA GET API-A/foo ; Auth.: AT_A
+AA-AS GET AS-A/tokeninfo?token=AT_A
+AS.AA OK {client_id:AppA, scope:API_A}
+AA-AS GET AS-A/userinfo?token=AT_A
+AS.AA OK {email:jo.doe@sg}
+AA.AB OK {...}
+
+Title: Mobile (Android) App with authcode and PKCE
+
+AB MobileApp A ; color:blue
+BR System Browser ; color:gray
+AS Auth Server A ; color:blue
+AA API A ; color:blue
+
+AB- has an Android App Link
+AB-BR Spawn browser to AS-A
+BR-AS GET AS-A/authorize?client_id=AppA&amp;redirect=app://open.AppA
+AS.BR REDIRECT app://open.AppA?code=c
+BR-AB app://open.AppA?code=c
+AB-AS GET AS-A/access_token?code=c ; Auth.: AppA:csec_AppA
+AS.AB OK {access_token:AT_A, id_token:JWT_A, ...}
+AB-AA GET API-A/foo ; Auth.: AT_A
+AA-AS GET AS-A/tokeninfo?token=AT_A
+AS.AA OK {client_id:AppA, scope:API_A}
+AA-AS GET AS-A/userinfo?token=AT_A
+AS.AA OK {email:jo.doe@sg}
+AA.AB OK {...}
+
+
+Title: Pass user strong auth using the JWT id_token
+
+AB Browser A ; color:blue
+AP App Server A ; color:blue
+BS Auth Server B ; color:red
+BA API B ; color:red
+
+AB-AP App-A/action; Cookie: CKY_A
+AP- JWT_A from user session
+AP-BS AS-B/access_token?scope=API_B cid_A:csec_A
+BS.AP OK {access_token:AT_B}
+AP-BA Auth.: AT_B; X-SG-UserToken: AS_A JWT_A
+BA-BS AS-B/tokeninfo?token=AT_B
+BS.BA OK {client_id:cid_A, scope:API_B}
+BA- verif JWT_A and read info
+BA.AP OK {...}
+AP.AB OK ...
+
+Title: And again with JWT ...
+
+BA API B ; color:red
+CS Auth Server C ; color:green
+CA API C ; color:green
+
+BA- JWT_A received from App-A
+BA-CS AS-C/access_token?scope=API_C cid_B:csec_B
+CS.BA OK {access_token:AT_C}
+BA-CA Auth.: AT_C; X-SG-UserToken: AS_A JWT_A
+CA- verif JWT_A and read info
+CA-CS AS-C/tokeninfo?token=AT_C
+CS.CA OK {client_id:cid_B, scope:API_C}
+CA.BA OK {...}
+
+Title: Pass user strong auth using the access token guid
+
+AS Auth Server A ; color:blue
+AP App Server A ; color:blue
+BS Auth Server B ; color:red
+BA API B ; color:red
+
+AP- get a token free of scopes
+AP-AS access_token?token=AT_A
+AS.AP OK {access_token:AT_USR_A}
+AP-BS AS-B/access_token?scope=API_B cid_AB:csec_AB
+BS.AP OK {access_token:AT_B}
+AP-BA Auth.: AT_B; X-SG-UserToken: AS_A AT_USR_A
+BA-BS AS-B/tokeninfo?token=AT_B
+BS.BA OK {client_id:cid_AB, scope:API_B}
+BA-AS AS-A/tokeninfo?token=AT_USR_A
+AS.BA OK {client_id:cid_AA, scope:''}
+BA-AS AS-A/userinfo?token=AT_USR_A
+AS.BA OK {email:joe.doe@sg}
+BA.AP OK {...}
+
+Title: And again with AT ...
+
+AS Auth Server A ; color:blue
+BA API B ; color:red
+CS Auth Server C ; color:green
+CA API C ; color:green
+
+BA- AT_USR_A received from App-A
+BA-CS AS-C/access_token?scope=API_C cid_BC:csec_BC
+CS.BA OK {access_token:AT_C}
+BA-CA Auth.: AT_C; X-SG-UserToken: AS_A AT_USR_A
+CA-CS AS-C/tokeninfo?token=AT_C
+CS.CA OK {client_id:cid_B, scope:API_C}
+CA-AS AS-A/tokeninfo?token=AT_USR_A
+AS.CA OK {client_id:cid_AA, scope:''}
+CA-AS AS-A/userinfo?token=AT_USR_A
+AS.CA OK {email:joe.doe@sg}
+CA.BA OK {...}
+
+
+</textarea>
+</body>
+</html>
