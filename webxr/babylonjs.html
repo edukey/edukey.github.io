@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>babylon.js</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+html, body { width: 100%; height: 100%; overflow: hidden; margin: 0; padding: 0; }
+#renderCanvas { width: 100%; height: 100%; touch-action: none; }
+</style>
+<script src="https://preview.babylonjs.com/babylon.js"></script>
+<script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script></head>
+<body>
+<canvas id="renderCanvas" touch-action="none"></canvas>
+<script>
+const canvas = document.getElementById("renderCanvas")
+const engine = new BABYLON.Engine(canvas, true)
+let box1 = null
+const createSceneAsync = async function() {
+    const scene = new BABYLON.Scene(engine)
+    const camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 5, -10), scene)
+    camera.setTarget(BABYLON.Vector3.Zero())
+    camera.attachControl(canvas, true)
+
+    const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene)
+    light.intensity = 0.7
+
+    // add objects, should use MeshBuilder
+    const sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 1, scene)
+    sphere.position.x = -2
+    sphere.position.y = 1
+
+    // An array with all animation keys
+    const anim1 = new BABYLON.Animation("anim1", "scaling.x", 30, 
+        BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
+    const anim2 = new BABYLON.Animation("anim2", "position.x", 30, 
+        BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
+    const keys = [{ frame: 0, value: 1 }, { frame: 10, value: 0.1 }, { frame: 100, value: 1 }]
+    anim1.setKeys(keys)
+    anim2.setKeys(keys)
+
+    box1 = BABYLON.Mesh.CreateBox("Box1", 1, scene)
+    box1.position.x = 2
+    box1.position.y = 1
+    box1.animations = [anim1,anim2]
+
+    const env = scene.createDefaultEnvironment()
+
+    // here we add XR support
+    const xr = await scene.createDefaultXRExperienceAsync({ floorMeshes: [env.ground] })
+
+    return scene
+}
+
+createSceneAsync().then(returnedScene => { 
+    const sceneToRender = returnedScene
+    // Repeatedly render the scene
+    engine.runRenderLoop(function() { sceneToRender.render() })
+    if(box1) sceneToRender.beginAnimation(box1, 0, 100, true)
+    else console.warn('no box1')
+})
+
+// Watch for browser/canvas resize events
+window.addEventListener("resize", function () { engine.resize() })
+</script>
+</body>
+</html>

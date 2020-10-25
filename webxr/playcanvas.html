@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>EDU.PlayCanvas</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<script src="https://playcanvas.github.io/lib/playcanvas.js"></script>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    canvas {
+        width: 100%;
+        height: 100%;
+    }
+    .message {
+        position: absolute;
+        padding: 8px 16px;
+        left: 20px;
+        bottom: 20px;
+        color: #ccc;
+        background-color: rgba(0, 0, 0, .5);
+        font-family: "Proxima Nova", Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<canvas id="application-canvas"></canvas>
+<div id="message" class="message">Something should appear here</div>
+<script>
+function message(msg) {
+    console.log(msg)
+    document.getElementById('message').innerText = msg
+}
+function cubes_scene(app) {
+    // create a grid of cubes
+    var createCube = function (x, y, z) {
+        var cube = new pc.Entity()
+        cube.addComponent("model", { type: "box" })
+        cube.setLocalScale(1, 1, 1)
+        cube.translate(x, y, z)
+        app.root.addChild(cube)
+    }
+    var SIZE = 16
+    for (var x = 0; x < SIZE; x++) {
+        for (var y = 0; y < SIZE; y++) {
+            createCube(2 * x - SIZE, -1.5, 2 * y - SIZE)
+        }
+    }
+}
+function main(f_init_scene) {
+    message("Initializing app ...")
+    
+    var canvas = document.getElementById('application-canvas')
+
+    // init app
+    var app = new pc.Application(canvas, {
+        mouse: new pc.Mouse(canvas),
+        touch: new pc.TouchDevice(canvas),
+        keyboard: new pc.Keyboard(window)
+    })
+    app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW)
+    app.setCanvasResolution(pc.RESOLUTION_AUTO)
+    window.addEventListener("resize", function () { app.resizeCanvas(canvas.width, canvas.height) })
+    app.graphicsDevice.maxPixelRatio = window.devicePixelRatio // use device pixel ratio
+    app.start()
+
+    // create camera
+    var c = new pc.Entity()
+    c.addComponent('camera', { clearColor: new pc.Color(44 / 255, 62 / 255, 80 / 255), farClip: 10000})
+    app.root.addChild(c)
+
+    // create light
+    var l = new pc.Entity()
+    l.addComponent("light", { type: "spot", range: 30 })
+    l.translate(0, 10, 0)
+    app.root.addChild(l)
+
+    f_init_scene(app)
+
+    // XR checks
+    if (!app.xr.supported) return message("WebXR is not supported")
+    //if (!app.xr.isAvailable(pc.XRTYPE_VR)) return message("Immersive VR is not available") // too early ?
+    message("Ready to start XR Session")
+
+    // XR events
+    app.mouse.on("mousedown", function () { 
+        if (app.xr.active) return
+        c.camera.startXr(pc.XRTYPE_VR, pc.XRSPACE_LOCAL, function (err) {
+            if (err) message("WebXR Immersive VR failed to start: " + err.message)
+        })
+    })
+    // c.camera.endXr() or app.xr.end() ?
+    // end session by keyboard ESC
+    app.keyboard.on('keydown', function (evt) { if (evt.key === pc.KEY_ESCAPE && app.xr.active) app.xr.end() })
+    app.xr.on('available:' + pc.XRTYPE_VR, function (available) { message("Immersive VR is " + (available ? 'available' : 'unavailable')) })
+    app.xr.on('start', function () { message("Immersive VR session has started") })
+    app.xr.on('end', function () { message("Immersive VR session has ended") })
+}
+main(cubes_scene)
+</script>
+</body>
+</html>
