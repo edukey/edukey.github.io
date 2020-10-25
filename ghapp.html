@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>poc gh app</title>
+<script id="template" type="x-tmpl-mustache">
+<ol>{{#items}}<li>{{path}}</li><ol>{{#text_matches}}<li>{{fragment}}</li>{{/text_matches}}</ol>{{/items}}</ol>
+</script>
+<script type="text/javascript">
+/*
+https://github.com/login/oauth/authorize?client_id=c602a8bd54b1e774f864&scope=repo
+Authorization:token 485c068812df6746781c475ee0ce7dbdc590ce08
+*/
+function gh_root() {
+	return "https://api.github.com/";
+}
+function gh_raw_file(args){
+	if(!$.isPlainObject(args)) return "no args";
+	if(!($.type(args.repo)==="string")) return "no repo";
+	if(!($.type(args.path)==="string")) return "no file path";
+	if(!($.type(args.success)==="function")) return "no success function";
+	var url="https://www.github.com/"+args.repo+"/raw/master/"+args.path;
+	var ajax_args={ url:url, success:args.success};
+	if($.type(args.error)==="function") { ajax_args.error=args.error};
+	$.ajax(ajax_args);
+	return "ok";
+}
+function gh_search_file(args){
+	if(!$.isPlainObject(args)) return "no args";
+	if(!($.type(args.q)==="string")) return "no query";
+	if(!($.type(args.success)==="function")) return "no success function";
+	var url=gh_root()+"search/code?q="+args.q+"+in:file";
+	if($.type(args.repo)==="string") url+="+repo:"+args.repo;
+	if($.type(args.ftype)==="string") url+="+language:"+args.ftype;
+	var ajax_args={ url:url, accepts:{json:"application/vnd.github.v3.text-match+json"}, dataType:"json", success:args.success};
+	if($.type(args.error)==="function") { ajax_args.error=args.error};
+	$("#info").text("Calling : "+url);
+	$.ajax(ajax_args);
+	return "ok";
+}
+function do_init() {
+	document.getElementById('info').innerText="Loaded";
+	$("#log").text("ready to work with jquery");
+	//do_search();
+	//do_getfile();
+	do_draw();
+}
+function do_draw() {
+	var paper=Raphael(10,50,320,200);
+	var p=paper.path("M10,10T20,20T10,30z").attr({fill:"#00f",stroke:"#888"});
+	var circle=paper.circle(50,40,10);
+	circle.attr("fill","#f00");
+	circle.attr("stroke","#fff");
+	p.animate({cx:100},2000);
+	circle.animate({cx:100, cy:90, r:20, stroke:"#888", fill:"#0f0", "stroke-width":5},2000);
+}
+function do_getfile() {
+	$("#out").html("Waiting for file load ...");
+	var args={
+		repo:$("#gfrepo").val(),
+		path:$("#gfpath").val()
+	};
+	args.success=function(data){
+		var obj=jsyaml.safeLoad(data);
+  		$('#out').text(data+'\n'+JSON.stringify(obj)+'\n'+jsyaml.safeDump(obj));
+  		
+	};
+	args.error=function(xhr, msg, exc) {
+		$("#log").text(msg+' '+JSON.stringify(exc));
+	};
+	var rt=gh_raw_file(args);
+	if(rt!="ok") {
+		$("#out").text("Error processing file load : "+rt);
+	}
+}
+function do_search() {
+	$("#out").html("Waiting for search results ...");
+	var args={
+		q:$("#q").val(),
+		repo:$("#repo").val(),
+		ftype:$("#ftype").val()
+	};
+	args.success=function(data){
+		//$("#log").text(JSON.stringify(data.items[0]));
+		var template = $("#template").html();
+		var rendered = Mustache.render(template, data);
+  		$('#out').html(rendered);
+	};
+	args.error=function(xhr, msg, exc) {
+		$("#log").text(msg+' '+JSON.stringify(exc));
+	};
+	var rt=gh_search_file(args);
+	if(rt!="ok") {
+		$("#out").text("Error processing the search : "+rt);
+	}
+}
+</script>
+</head>
+<body onload="do_init()">
+<div id="info">Loading JS ...</div>
+<div>Github file search :
+within repo : <input type="text" id="repo" value="jquery/jquery"/>
+for file type: <input type="text" id="ftype" value="js" size="5"/>
+having term: <input type="text" id="q" value="addClass"/>
+<button onclick="do_search()">Search</button>
+</div>
+<div>Github file load :
+within repo : <input type="text" id="gfrepo" value="edukey/edukey.github.io"/>
+file path : <input type="text" id="gfpath" value="_data/svc/sample.yaml"/>
+<button onclick="do_getfile()">Get file</button>
+</div>
+<div id="out">... out ...</div>
+<div id="log">... log ...</div>
+<!--easier html dom+apis handling  -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<!--easier core js handling  -->
+<noscript src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.2.0/prototype.js"></noscript> 
+<!--logic less templating -->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.min.js"></script>
+<!--mustache with customizable tags -->
+<noscript src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/3.0.3/handlebars.min.js"></noscript>
+<!--high speed mustache, pre-compiled templates -->
+<noscript src="http://cdnjs.cloudflare.com/ajax/libs/hogan.js/3.0.2/hogan.js"></noscript>
+<!--noscript src="http://twitter.github.com/hogan.js/builds/3.0.1/hogan-3.0.1.js"></noscript-->
+<!--YAML parsing -->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/js-yaml/3.3.0/js-yaml.min.js"></script>
+<!--vector lib -->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.2/raphael-min.js"></script>
+<!--diag box/lines -->
+<noscript src="http://cdnjs.cloudflare.com/ajax/libs/jsPlumb/1.4.1/jquery.jsPlumb-1.4.1-all-min.js"></noscript>
+<!--diag box/lines -->
+<noscript src="http://cdnjs.cloudflare.com/ajax/libs/jointjs/0.9.0/joint.min.js"></noscript>
+</body>
+</html>

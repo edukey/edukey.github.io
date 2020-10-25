@@ -1,0 +1,10 @@
+---
+# aggregates data from multiple yaml files into a single json file for quick indexing from js ui app
+---
+{
+"tags": {
+{% for kv in site.data.svc %}
+{% unless forloop.first%},{% endunless %}"{{kv[0]}}":[{% for tag in kv[1].tags %}{% unless forloop.first%},{% endunless %}"{{tag}}"{% endfor %}]
+{% endfor %}
+}
+}

@@ -1,3 +1,4 @@
 code: test
 label: Test Data
 description: this is a test data
+tags: [ business, payment, fx, cds ]
