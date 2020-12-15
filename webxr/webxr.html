@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>webxr native</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+body { font-family: Verdana; font-size: 16pt; margin: 0; padding: 0; overflow: hidden; }
+/*canvas { width: 100%; height: 100%; }*/
+canvas { width: 640px; height: 480px; }
+#message { position: absolute; padding: 8px 16px;
+  left: 20px; bottom: 20px;
+  color: #ccc; background-color: rgba(0, 0, 0, .5);
+  font-family: "Proxima Nova", Arial, sans-serif;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+<body>
+<div id="message">Something should appear here</div>
+<canvas id="glcanvas"></canvas>
+<script>
+
+// https://developer.mozilla.org/en-US/docs/Web/API/WebXR_Device_API
+// https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Creating_3D_objects_using_WebGL
+// https://github.com/mdn/webgl-examples
+// https://github.com/mdn/webgl-examples/tree/gh-pages/tutorial/sample5
+
+let xrRefSpace = null
+let _gl = null
+
+const _colors={
+  red:[1.0,  0.0,  0.0,  1.0],
+  blue:[0.0,  0.0,  1.0,  1.0],
+  green:[0.0,  1.0,  0.0,  1.0],
+  yellow:[1.0,  1.0,  0.0,  1.0],
+  purple:[1.0,  0.0,  1.0,  1.0],
+  cyan:[0.0,  1.0,  1.0,  1.0],
+  gray:[0.5,  0.5,  0.5,  1.0],
+  lightgray:[0.25,  0.25,  0.25,  1.0],
+  darkgray:[0.75,  0.75,  0.75,  1.0],
+}
+
+//xrMain()
+glMain()
+
+function message(msg) {
+    console.log(msg)
+    document.getElementById('message').innerText = msg
+}
+function xrMain() {
+  if (! navigator.xr) return message('Browser does not support WebXR')
+  // If the device allows creation of exclusive sessions set it as the
+  // target of the 'Enter XR' button.
+  navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+    message('immersive-vr supported: '+supported)
+    if(supported) {
+      document.getElementById('message').onclick=function() {
+        navigator.xr.requestSession('immersive-vr').then(onSessionStarted)
+      }
+    }
+  })
+}
+function onSessionStarted(session) {
+  message("XR Session started")
+  session.addEventListener('end', function(){
+    message("XR Session ended")
+    // our clean up code if needed
+  })
+  // session.end()
+  _gl = createWebGLContext({ xrCompatible: true })
+  session.updateRenderState({ baseLayer: new XRWebGLLayer(session, _gl) });
+  session.requestReferenceSpace('local').then((refSpace) => {
+    xrRefSpace = refSpace
+    session.requestAnimationFrame(onXRFrame) // Inform the session that we're ready to begin drawing.
+  })
+}
+
+function onXRFrame(t, frame) {
+  const session = frame.session
+  session.requestAnimationFrame(onXRFrame)
+  let pose = frame.getViewerPose(xrRefSpace)
+  if(!pose) return // message('No pose, tracking lost ?')
+  let glLayer = session.renderState.baseLayer;
+  const gl=_gl
+  gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  for (let view of pose.views) {
+    let viewport = glLayer.getViewport(view)
+    gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+    draw(gl, view.projectionMatrix, view.transform)
+  }
+}
+function draw(gl, matrix, transform) {
+
+}
+
+function glMain() {
+  const canvas = document.querySelector('#glcanvas')
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+
+  if (!gl)  return alert('Unable to initialize WebGL. Your browser or machine may not support it.')
+
+  const programInfo = glProgInfo(gl, glStandardShader(gl))
+  const buffers = glCubeBuffers(gl)
+
+  let cubeRotation = 0.0
+  let then = 0
+  function onGLFrame(now) { // Draw the scene repeatedly
+    now *= 0.001;  // convert to seconds
+    const deltaTime = now - then;
+    then = now;
+    glDrawScene(gl, programInfo, buffers, cubeRotation)
+    cubeRotation += deltaTime // Update the rotation for the next draw
+    window.requestAnimationFrame(onGLFrame)
+  }
+  window.requestAnimationFrame(onGLFrame)
+}
+
+function glProgInfo(gl, shaderProgram) {
+  // Collect all the info needed to use the shader program.
+  // Look up which attributes our shader program is using for aVertexPosition, aVevrtexColor and also look up uniform locations.
+  return {
+    program: shaderProgram,
+    attribLocations: {
+      vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+      vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
+    },
+    uniformLocations: {
+      projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+    }
+  }
+}
+
+function glStandardShader(gl) {
+  const vertex_shader = `
+    attribute vec4 aVertexPosition;
+    attribute vec4 aVertexColor;
+
+    uniform mat4 uModelViewMatrix;
+    uniform mat4 uProjectionMatrix;
+
+    varying lowp vec4 vColor;
+
+    void main(void) {
+      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+      vColor = aVertexColor;
+    }
+  `
+  const fragment_shader = `
+    varying lowp vec4 vColor;
+
+    void main(void) {
+      gl_FragColor = vColor;
+    }
+  `
+  // Initialize a shader program; this is where all the lighting for the vertices and so forth is established.
+  return glInitShaderProgram(gl, vertex_shader, fragment_shader)
+}
+
+// help to create a GL Buffer from a JS typed array
+function glBuffer(gl, kind, data) {
+  const buffer = gl.createBuffer()
+  gl.bindBuffer(kind, buffer)
+  gl.bufferData(kind, data, gl.STATIC_DRAW)
+  return buffer
+}
+
+// Initialize the buffers we'll need. here only one cube.
+function glCubeBuffers(gl) {
+  // 6 faces, with 2 triangles per face = 12 triangles * 3 points = 36 points
+  // 4 vertices/points per face = 24 vertices/points
+  // can not reuse same point as they belongs to different triangles and so have different colors
+  // 3 coordinates per vertex/point = 72 numbers
+  // Create a buffer for the cube's vertex (points) positions : 6 faces * 4 points * 3 coords = 72 numbers
+  const positions = [
+    -1.0, -1.0,  1.0,     1.0, -1.0,  1.0,     1.0,  1.0,  1.0,    -1.0,  1.0,  1.0, // Front face
+    -1.0, -1.0, -1.0,    -1.0,  1.0, -1.0,     1.0,  1.0, -1.0,     1.0, -1.0, -1.0, // Back face
+    -1.0,  1.0, -1.0,    -1.0,  1.0,  1.0,     1.0,  1.0,  1.0,     1.0,  1.0, -1.0, // Top face
+    -1.0, -1.0, -1.0,     1.0, -1.0, -1.0,     1.0, -1.0,  1.0,    -1.0, -1.0,  1.0, // Bottom face
+     1.0, -1.0, -1.0,     1.0,  1.0, -1.0,     1.0,  1.0,  1.0,     1.0, -1.0,  1.0, // Right face
+    -1.0, -1.0, -1.0,    -1.0, -1.0,  1.0,    -1.0,  1.0,  1.0,    -1.0,  1.0, -1.0, // Left face
+  ]
+
+  // Now set up the colors for the faces. We'll use solid colors for each face.
+  // 6 faces : Front Back Top Bottom Right Left
+  const faceColors = [
+    _colors.lightgray, _colors.lightgray, // Front/Back
+    _colors.gray, _colors.gray,           // Top/Bottom
+    _colors.darkgray, _colors.darkgray,   // Right/Left
+  ]
+  // Convert the array of colors into a table for all the 6*4=24 vertices.
+  // Repeat each color four times for the four vertices of the face
+  let colors = [] // 24 colors, one per vertex
+  for (const c of faceColors) colors = colors.concat(c, c, c, c) 
+
+  // Specifies the indices into the vertex arrays for each face's vertices.
+  // This array defines each face as two triangles, using the indices into the vertex array to specify each triangle's position.
+  // 12 triangles of 3 vertices = 36 points ; 2 triangles per face
+  const indices = [
+    0,  1,  2,      0,  2,  3,    // front
+    4,  5,  6,      4,  6,  7,    // back
+    8,  9,  10,     8,  10, 11,   // top
+    12, 13, 14,     12, 14, 15,   // bottom
+    16, 17, 18,     16, 18, 19,   // right
+    20, 21, 22,     20, 22, 23,   // left
+  ]
+
+  return { 
+    position: glBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(positions)), // 72 nums = 24 points = 6 faces with 4 points per face
+    color:    glBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(colors)), // 96 composites = 24 points = 6 faces with 4 points per face
+    indices:  glBuffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices)), // 36 indices = 12 triangles = 6 faces
+    indicesCount: 36,
+  }
+}
+
+function glClear(gl) {
+  gl.clearColor(0.0, 0.0, 0.0, 1.0)  // Clear to black, fully opaque
+  gl.clearDepth(1.0)                 // Clear everything
+  gl.enable(gl.DEPTH_TEST)           // Enable depth testing
+  gl.depthFunc(gl.LEQUAL)            // Near things obscure far things
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT) // Clear the canvas before we start drawing on it.
+}
+
+// Draw the scene.
+function glDrawScene(gl, programInfo, buffers, cubeRotation) {
+  glClear(gl)
+
+  // Create a perspective matrix, a special matrix that is used to simulate the distortion of perspective in a camera.
+  // Our field of view is 45 degrees, with a width/height ratio that matches the display size of the canvas
+  // and we only want to see objects between 0.1 units and 100 units away from the camera.
+  const fieldOfView = 45 * Math.PI / 180 // in radians
+  const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
+  const projectionMatrix = mat4.create()
+  mat4.perspective(projectionMatrix, fieldOfView, aspect, 0.1, 100.0) // destination, fieldOfView, aspect, zNear, zFar
+
+  // Set the drawing position to the "identity" point, which is the center of the scene.
+  const modelViewMatrix = mat4.create()
+  // Now move the drawing position a bit to where we want to start drawing the square.
+  mat4.translate(modelViewMatrix, modelViewMatrix, [-0.0, 0.0, -6.0]) // destination, source, translation
+  mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation, [0, 0, 1]) // destination, source, amount to rotate in radians, axis to rotate around (Z)
+  mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * .7, [0, 1, 0]) // destination, source, amount to rotate in radians, axis to rotate around (X)
+  mat4.rotate(modelViewMatrix, modelViewMatrix, cubeRotation * .5, [1, 0, 0]) // destination, source, amount to rotate in radians, axis to rotate around (X)
+
+  // pull out the positions from the position buffer into the vertexPosition attribute, 3 nums per position
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position)
+  gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0)  // x, numComponents, type, normalize, stride, offset
+  gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition)
+
+  // pull out the colors from the color buffer into the vertexColor attribute, 4 nums per color
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color)
+  gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0) // x, numComponents, type, normalize, stride, offset
+  gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor)
+
+  // indices to use to index the vertices
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices) 
+  gl.useProgram(programInfo.program)
+
+  gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix)
+  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix)
+
+  gl.drawElements(gl.TRIANGLES, buffers.indicesCount, gl.UNSIGNED_SHORT, 0) // kind, vertexCount, type, offset
+}
+
+// Initialize a shader program, so WebGL knows how to draw our data
+function glInitShaderProgram(gl, vertex_source, fragment_source) {
+  const vertexShader = glLoadShader(gl, gl.VERTEX_SHADER, vertex_source)
+  if(!vertexShader) return null
+  const fragmentShader = glLoadShader(gl, gl.FRAGMENT_SHADER, fragment_source)
+  if(!fragmentShader) return null
+  const shaderProgram = gl.createProgram()
+  gl.attachShader(shaderProgram, vertexShader)
+  gl.attachShader(shaderProgram, fragmentShader)
+  gl.linkProgram(shaderProgram)
+  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+    alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram))
+    return null
+  }
+  return shaderProgram
+}
+
+// creates a shader of the given type, uploads the source and compiles it.
+function glLoadShader(gl, type, source) {
+  const shader = gl.createShader(type)
+  gl.shaderSource(shader, source)
+  gl.compileShader(shader)
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader))
+    gl.deleteShader(shader)
+    return null
+  }
+  return shader
+}
+
+</script>
+</body>
+</html>
