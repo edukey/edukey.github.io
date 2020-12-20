@@ -25,18 +25,19 @@ var controller, controllerGrip, tempMatrix = new THREE.Matrix4()
 var INTERSECTED
 
 var skyFiles1=skyFiles()
-var isSkyDome=false
+var isSkyDome=true
 
 init()
 animate()
 
 function skyFiles() {
-	const dic={dn:27, rt:28, ft:29, lf:30, bk:31, up:37}
+	// pos-x neg-x pos-y neg-y pos-z neg-z
+	const dic={ft:29, bk:31, rt:28, lf:30, up:37, dn:27}
     for(const side in dic) {
         // cors fails from https://s3-eu-west-1.amazonaws.com/apps.playcanvas.com/xp7v1oFB/files/assets/27587{}/1/stormydays_{}_1.png
         dic[side]='sky/stormydays_'+side+'_1.png'
     }
-    return [dic.lf, dic.up, dic.ft, dic.rt, dic.dn, dic.bk]
+    return [dic.ft, dic.bk, dic.up, dic.dn, dic.rt, dic.lf]
 }
 function skyDome(scene, url) {
 	const loader = new THREE.TextureLoader()
@@ -72,9 +73,9 @@ function randomBox(geometry) {
 	object.rotation.y = Math.random() * 2 * Math.PI
 	object.rotation.z = Math.random() * 2 * Math.PI
 
-	object.scale.x = Math.random() + 0.5
-	object.scale.y = Math.random() + 0.5
-	object.scale.z = Math.random() + 0.5
+	object.scale.x = Math.random() / 4 + 0.05
+	object.scale.y = Math.random() / 4 + 0.05
+	object.scale.z = Math.random() / 4 + 0.05
 
 	object.userData.velocity = new THREE.Vector3()
 	object.userData.velocity.x = Math.random() * 0.01 - 0.005
