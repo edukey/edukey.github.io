@@ -24,70 +24,105 @@ var room
 var controller, controllerGrip, tempMatrix = new THREE.Matrix4()
 var INTERSECTED
 
+var skyFiles1=skyFiles()
+var isSkyDome=false
+
 init()
 animate()
 
+function skyFiles() {
+	const dic={dn:27, rt:28, ft:29, lf:30, bk:31, up:37}
+    for(const side in dic) {
+        // cors fails from https://s3-eu-west-1.amazonaws.com/apps.playcanvas.com/xp7v1oFB/files/assets/27587{}/1/stormydays_{}_1.png
+        dic[side]='sky/stormydays_'+side+'_1.png'
+    }
+    return [dic.lf, dic.up, dic.ft, dic.rt, dic.dn, dic.bk]
+}
+function skyDome(scene, url) {
+	const loader = new THREE.TextureLoader()
+	//-- async
+
+	loader.load(url, (texture) => {
+	    const rt = new THREE.WebGLCubeRenderTarget(texture.image.height)
+	    rt.fromEquirectangularTexture(renderer, texture)
+	    scene.background = rt
+	})
+	isSkyDome=true
+	//-- sync
+ 	// const texture = loader.load(url)
+	// const rt = new THREE.WebGLCubeRenderTarget(texture.image.height)
+	// rt.fromEquirectangularTexture(renderer, texture)
+	// scene.background = rt
+}
+function skyBox(scene, files) {
+	const ctLoader = new THREE.CubeTextureLoader()
+	const skyCubeTexture = ctLoader.load(files)
+	scene.background = skyCubeTexture
+	isSkyDome=false
+}
+function randomBox(geometry) {
+	var mat = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } )
+	var object = new THREE.Mesh( geometry,  mat)
+
+	object.position.x = Math.random() * 4 - 2
+	object.position.y = Math.random() * 4
+	object.position.z = Math.random() * 4 - 2
+
+	object.rotation.x = Math.random() * 2 * Math.PI
+	object.rotation.y = Math.random() * 2 * Math.PI
+	object.rotation.z = Math.random() * 2 * Math.PI
+
+	object.scale.x = Math.random() + 0.5
+	object.scale.y = Math.random() + 0.5
+	object.scale.z = Math.random() + 0.5
+
+	object.userData.velocity = new THREE.Vector3()
+	object.userData.velocity.x = Math.random() * 0.01 - 0.005
+	object.userData.velocity.y = Math.random() * 0.01 - 0.005
+	object.userData.velocity.z = Math.random() * 0.01 - 0.005
+	return object	
+}
 function init() {
 
 	container = document.createElement( 'div' )
 	document.body.appendChild( container )
 
 	scene = new THREE.Scene()
-	scene.background = new THREE.Color( 0x505050 )
+
+	switchBackground()
+	//scene.background = new THREE.Color( 0x505050 )
 
 	camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 10 )
 	camera.position.set( 0, 1.6, 3 )
 	scene.add( camera )
 
+	//-- lights
+	scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) )
+	var light = new THREE.DirectionalLight( 0xffffff )
+	light.position.set( 1, 1, 1 ).normalize()
+	scene.add( light )
+
+	//-- room with grid
 	room = new THREE.LineSegments(
 		new BoxLineGeometry( 6, 6, 6, 10, 10, 10 ).translate( 0, 3, 0 ),
 		new THREE.LineBasicMaterial( { color: 0x808080 } )
 	)
 	scene.add( room )
 
-	scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) )
-
-	var light = new THREE.DirectionalLight( 0xffffff )
-	light.position.set( 1, 1, 1 ).normalize()
-	scene.add( light )
-
+	//-- box in room
 	var geometry = new THREE.BoxBufferGeometry( 0.5, 0.5, 0.5 )
 
-	var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0xff00ff } ) )
-	object.userData.velocity = new THREE.Vector3()
-	object.position.x = 0
-	object.position.y = 2
-	object.position.z = -2
-	object.userData.velocity.x = 0.01
-	object.userData.velocity.y = 0
-	object.userData.velocity.z = 0
-	room.add( object )
-	/*
-	for ( var i = 0; i < 200; i ++ ) {
+	// var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0xff00ff } ) )
+	// object.position.x = 0
+	// object.position.y = 2
+	// object.position.z = -2
+	// object.userData.velocity = new THREE.Vector3()
+	// object.userData.velocity.x = 0.01
+	// object.userData.velocity.y = 0
+	// object.userData.velocity.z = 0
+	// room.add( object )
 
-		var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) )
-
-		object.position.x = Math.random() * 4 - 2
-		object.position.y = Math.random() * 4
-		object.position.z = Math.random() * 4 - 2
-
-		object.rotation.x = Math.random() * 2 * Math.PI
-		object.rotation.y = Math.random() * 2 * Math.PI
-		object.rotation.z = Math.random() * 2 * Math.PI
-
-		object.scale.x = Math.random() + 0.5
-		object.scale.y = Math.random() + 0.5
-		object.scale.z = Math.random() + 0.5
-
-		object.userData.velocity = new THREE.Vector3()
-		object.userData.velocity.x = Math.random() * 0.01 - 0.005
-		object.userData.velocity.y = Math.random() * 0.01 - 0.005
-		object.userData.velocity.z = Math.random() * 0.01 - 0.005
-
-		room.add( object )
-
-	}
-	*/
+	for ( var i = 0; i < 200; i ++ ) room.add(randomBox(geometry))
 
 	raycaster = new THREE.Raycaster()
 
@@ -99,10 +134,10 @@ function init() {
 	container.appendChild( renderer.domElement )
 
 	controller = renderer.xr.getController( 0 )
-	controller.addEventListener( 'selectstart',  ()     =>{ this.userData.isSelecting = true } )
-	controller.addEventListener( 'selectend',    ()     =>{ this.userData.isSelecting = false } )
-	controller.addEventListener( 'connected',    (event)=>{ this.add(buildController(event.data)) } )
-	controller.addEventListener( 'disconnected', ()     =>{ this.remove(this.children[0]) } )
+	controller.addEventListener( 'selectstart',  ()     =>{ controller.userData.isSelecting = true; switchBackground() } )
+	controller.addEventListener( 'selectend',    ()     =>{ controller.userData.isSelecting = false } )
+	controller.addEventListener( 'connected',    (event)=>{ controller.add(buildController(event.data)) } )
+	controller.addEventListener( 'disconnected', ()     =>{ controller.remove(controller.children[0]) } )
 	scene.add( controller )
 
 	var controllerModelFactory = new XRControllerModelFactory()
@@ -113,6 +148,15 @@ function init() {
 	window.addEventListener( 'resize', onWindowResize, false )
 
 	document.body.appendChild( VRButton.createButton( renderer ) )
+}
+
+function switchBackground() {
+	if(isSkyDome) {
+		skyBox(scene, skyFiles1)
+	}
+	else {
+		skyDome(scene, 'https://threejsfundamentals.org/threejs/resources/images/equirectangularmaps/tears_of_steel_bridge_2k.jpg')
+	}
 }
 
 function buildController( data ) {
@@ -144,6 +188,7 @@ function animate() {
 function render() {
 	var delta = clock.getDelta() * 60
 
+	//-- replace first by new box
 	if ( controller.userData.isSelecting === true ) {
 		var cube = room.children[ 0 ]
 		room.remove( cube )
@@ -156,7 +201,7 @@ function render() {
 		room.add( cube )
 	}
 
-	// find intersections
+	//-- find intersections
 
 	tempMatrix.identity().extractRotation( controller.matrixWorld )
 
@@ -197,6 +242,7 @@ function render() {
 		cube.rotation.y += cube.userData.velocity.y * 2 * delta
 		cube.rotation.z += cube.userData.velocity.z * 2 * delta
 	}
+
 	renderer.render( scene, camera )
 }
 </script>
