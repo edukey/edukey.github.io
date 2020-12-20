@@ -9,7 +9,8 @@
 <body>
 <script type="module">
 import * as THREE from 'https://threejs.org/build/three.module.js'
-
+import StatsVR from './statsvr.js'
+//import StatsVR from 'https://raw.githubusercontent.com/Sean-Bradley/StatsVR/master/dist/client/statsvr.js'
 import { BoxLineGeometry } from 'https://threejs.org/examples/jsm/geometries/BoxLineGeometry.js'
 import { VRButton } from 'https://threejs.org/examples/jsm/webxr/VRButton.js'
 import { XRControllerModelFactory } from 'https://threejs.org/examples/jsm/webxr/XRControllerModelFactory.js'
@@ -18,14 +19,15 @@ var clock = new THREE.Clock()
 
 var container
 var camera, scene, raycaster, renderer
-
+var statsVR
 var room
 
-var controller, controllerGrip, tempMatrix = new THREE.Matrix4()
+var controller, controller2, controllerGrip
+var tempMatrix = new THREE.Matrix4()
 var INTERSECTED
 
 var skyFiles=[
-	skyFiles('sky/stormydays_$0_1.png'),
+	skyFilesSides('sky/stormydays_$0_1.png'),
 	skyFilesBabylon('skybox'),
 	skyFilesBabylon('skybox4'),
 	skyFilesBabylon('TropicalSunnyDay'),
@@ -38,7 +40,7 @@ var nuSky=-1
 init()
 animate()
 
-function skyFiles(tmpl) {
+function skyFilesSides(tmpl) {
 	// pos-x neg-x pos-y neg-y pos-z neg-z
 	const dic={ft:29, bk:31, rt:28, lf:30, up:37, dn:27}
     for(const side in dic) {
@@ -123,6 +125,8 @@ function init() {
 	camera.position.set( 0, 1.6, 3 )
 	scene.add( camera )
 
+	statsVR = new StatsVR(scene, camera)
+
 	//-- lights
 	scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) )
 	var light = new THREE.DirectionalLight( 0xffffff )
@@ -161,11 +165,19 @@ function init() {
 	container.appendChild( renderer.domElement )
 
 	controller = renderer.xr.getController( 0 ) // left ? or first one activated ?
-	controller.addEventListener( 'selectstart',  ()     =>{ controller.userData.isSelecting = true; switchBackground() } )
+	controller.addEventListener( 'selectstart',  ()     =>{ controller.userData.isSelecting = true } )
 	controller.addEventListener( 'selectend',    ()     =>{ controller.userData.isSelecting = false } )
 	controller.addEventListener( 'connected',    (event)=>{ controller.add(buildController(event.data)) } )
 	controller.addEventListener( 'disconnected', ()     =>{ controller.remove(controller.children[0]) } )
 	scene.add( controller )
+
+	controller2 = renderer.xr.getController( 1 ) // left ? or first one activated ?
+	controller2.addEventListener( 'selectstart',  ()     =>{ switchBackground() } )
+	controller2.addEventListener( 'selectend',    ()     =>{  } )
+	controller2.addEventListener( 'connected',    (event)=>{ controller2.add(buildController(event.data)) } )
+	controller2.addEventListener( 'disconnected', ()     =>{ controller2.remove(controller2.children[0]) } )
+	scene.add( controller2 )
+
 
 	var controllerModelFactory = new XRControllerModelFactory()
 	controllerGrip = renderer.xr.getControllerGrip( 0 )
@@ -261,7 +273,9 @@ function render() {
 		cube.rotation.y += cube.userData.velocity.y * 2 * delta
 		cube.rotation.z += cube.userData.velocity.z * 2 * delta
 	}
-
+	statsVR.setCustom1(nuSky)
+	statsVR.setCustom2("Hello")
+	statsVR.update()
 	renderer.render( scene, camera )
 }
 </script>
