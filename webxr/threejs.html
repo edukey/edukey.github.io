@@ -24,20 +24,38 @@ var room
 var controller, controllerGrip, tempMatrix = new THREE.Matrix4()
 var INTERSECTED
 
-var skyFiles1=skyFiles()
-var isSkyDome=true
+var skyFiles=[
+	skyFiles('sky/stormydays_$0_1.png'),
+	skyFilesBabylon('skybox'),
+	skyFilesBabylon('skybox4'),
+	skyFilesBabylon('TropicalSunnyDay'),
+	'https://threejsfundamentals.org/threejs/resources/images/equirectangularmaps/tears_of_steel_bridge_2k.jpg',
+	'https://immersive-web.github.io/webxr-samples/media/textures/milky-way-4k.png',
+	'https://live.staticflickr.com/65535/50642987086_c8b30555bb_k.jpg',
+	'https://playground.babylonjs.com/textures/equirectangular.jpg']
+var nuSky=-1
 
 init()
 animate()
 
-function skyFiles() {
+function skyFiles(tmpl) {
 	// pos-x neg-x pos-y neg-y pos-z neg-z
 	const dic={ft:29, bk:31, rt:28, lf:30, up:37, dn:27}
     for(const side in dic) {
         // cors fails from https://s3-eu-west-1.amazonaws.com/apps.playcanvas.com/xp7v1oFB/files/assets/27587{}/1/stormydays_{}_1.png
-        dic[side]='sky/stormydays_'+side+'_1.png'
+        dic[side]=tmpl.replace('$0',side)
     }
     return [dic.ft, dic.bk, dic.up, dic.dn, dic.rt, dic.lf]
+    
+}
+function skyFilesBabylon(pfx) {
+	// pfx: skybox skybox4 TropicalSunnyDay
+	const base="https://playground.babylonjs.com/textures/$0_$1.jpg".replace('$0',pfx)
+	const dic={px:1,nx:1,py:1,ny:1,pz:1,nz:1}
+    for(const side in dic) {
+    	dic[side]=base.replace('$1',side)
+    }
+    return [dic.px, dic.nx, dic.py, dic.ny, dic.pz, dic.nz]
 }
 function skyDome(scene, url) {
 	const loader = new THREE.TextureLoader()
@@ -48,7 +66,6 @@ function skyDome(scene, url) {
 	    rt.fromEquirectangularTexture(renderer, texture)
 	    scene.background = rt
 	})
-	isSkyDome=true
 	//-- sync
  	// const texture = loader.load(url)
 	// const rt = new THREE.WebGLCubeRenderTarget(texture.image.height)
@@ -59,8 +76,17 @@ function skyBox(scene, files) {
 	const ctLoader = new THREE.CubeTextureLoader()
 	const skyCubeTexture = ctLoader.load(files)
 	scene.background = skyCubeTexture
-	isSkyDome=false
 }
+
+function switchBackground() {
+	nuSky++
+	if(nuSky>=skyFiles.length) nuSky=0
+	const skyes=skyFiles[nuSky]
+	if(skyes.constructor==Array) skyBox(scene, skyes)
+	if(skyes.constructor==String) skyDome(scene, skyes)
+}
+
+
 function randomBox(geometry) {
 	var mat = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } )
 	var object = new THREE.Mesh( geometry,  mat)
@@ -134,7 +160,7 @@ function init() {
 	renderer.xr.enabled = true
 	container.appendChild( renderer.domElement )
 
-	controller = renderer.xr.getController( 0 )
+	controller = renderer.xr.getController( 0 ) // left ? or first one activated ?
 	controller.addEventListener( 'selectstart',  ()     =>{ controller.userData.isSelecting = true; switchBackground() } )
 	controller.addEventListener( 'selectend',    ()     =>{ controller.userData.isSelecting = false } )
 	controller.addEventListener( 'connected',    (event)=>{ controller.add(buildController(event.data)) } )
@@ -151,14 +177,6 @@ function init() {
 	document.body.appendChild( VRButton.createButton( renderer ) )
 }
 
-function switchBackground() {
-	if(isSkyDome) {
-		skyBox(scene, skyFiles1)
-	}
-	else {
-		skyDome(scene, 'https://threejsfundamentals.org/threejs/resources/images/equirectangularmaps/tears_of_steel_bridge_2k.jpg')
-	}
-}
 
 function buildController( data ) {
 	switch ( data.targetRayMode ) {
