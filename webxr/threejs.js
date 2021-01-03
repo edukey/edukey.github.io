@@ -174,13 +174,12 @@ function switchBackground() {
 	if(skyes.constructor==String) skyDome(scene, skyes)
 }
 
-
 function randomBox(geometry) {
-  // var color = Math.random() * 0xffffff
-  var color = 0xffffff
-	var mat = new THREE.MeshLambertMaterial( { color: color } )
-	var object = new THREE.Mesh( geometry,  mat)
-  var max_pos = ROOM_SIZE-1
+	// var color = Math.random() * 0xffffff
+	const color = 0xffffff
+	const mat = new THREE.MeshLambertMaterial( { color: color } )
+	const object = new THREE.Mesh( geometry,  mat)
+	const max_pos = ROOM_SIZE-1
 	object.position.x = Math.random() * max_pos - ROOM_MID
 	object.position.y = Math.random() * max_pos
 	object.position.z = Math.random() * max_pos - ROOM_MID
