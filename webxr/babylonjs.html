@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <style>
 html, body { width: 100%; height: 100%; overflow: hidden; margin: 0; padding: 0; }
-#renderCanvas { width: 100%; height: 100%; touch-action: none; }
+#renderCanvas { width: 100%; touch-action: none; }
 </style>
 <!--
 Physics : ammo cannon Oimo
@@ -35,8 +35,8 @@ earcut ?
 <pre id="debug"></pre></div>
 <canvas id="renderCanvas" touch-action="none"></canvas>
 <script type="module">
-import * as B1 from './b1.mjs'
-import * as B2 from './b2.mjs'
+import * as B1 from './b1.js'
+import * as B2 from './b2.js'
 if(document.location.hash=='#T1') B1.start()
 if(document.location.hash=='#T2') B2.start()
 document.getElementById('b1').onclick = ()=>{B2.stop(); B1.start()}
