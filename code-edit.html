@@ -6,6 +6,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/javascript/javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/python/python.min.js"></script>
+<script src="https://codemirror.net/5/addon/selection/active-line.js"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
 <style>
 * { font-size: 14pt; }
@@ -30,6 +31,7 @@ async function init() {
 		value:'console.log("hi from Javascript")',
 		mode:'javascript',
 		theme:'mbo',
+		styleActiveLine:true,
 		extraKeys:{ 'Shift-Enter':(a)=>{try_js()} }
 	}
 	const src_js=document.getElementById('src_js')
@@ -44,6 +46,7 @@ async function init() {
 		value: 'print("hi from Python")',
 		mode:'python',
 		theme:'mbo',
+		styleActiveLine:true,
 		extraKeys:{ 'Shift-Enter':(a)=>{try_py()} }
 	}
 	const mysrc=document.getElementById('mysrc')
