@@ -2,6 +2,7 @@
 <head>
 <link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.css" rel="stylesheet" />
 <link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/monokai.min.css" rel="stylesheet" />
+<link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/mbo.min.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/javascript/javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/python/python.min.js"></script>
@@ -28,7 +29,7 @@ async function init() {
 		tabSize: 2,
 		value:'console.log("hi from Javascript")',
 		mode:'javascript',
-		theme:'monokai',
+		//theme:'monokai',
 		extraKeys:{ 'Shift-Enter':(a)=>{try_js()} }
 	}
 	const src_js=document.getElementById('src_js')
@@ -42,7 +43,7 @@ async function init() {
 		tabSize: 2,
 		value: 'print("hi from Python")',
 		mode:'python',
-		theme:'monokai',
+		theme:'mbo',
 		extraKeys:{ 'Shift-Enter':(a)=>{try_py()} }
 	}
 	const mysrc=document.getElementById('mysrc')
