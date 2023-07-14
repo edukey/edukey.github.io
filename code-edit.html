@@ -1,0 +1,107 @@
+<html>
+<head>
+<link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.css" rel="stylesheet" />
+<link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/monokai.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+<style>
+* { font-size: 14pt; }
+#myerr { color:red; }
+#content { display:flex; flex-wrap: wrap; }
+</style>
+<script>
+let cm_py
+let cm_js
+let pyodide
+let myres
+let myerr
+let res_js
+let err_js
+async function init() {
+	// Js init
+	res_js=document.getElementById('res_js')
+	err_js=document.getElementById('err_js')
+	const cm_opt_js={
+		lineNumbers: true,
+		tabSize: 2,
+		value:'console.log("hi from Javascript")',
+		mode:'javascript',
+		theme:'monokai',
+		extraKeys:{ 'Shift-Enter':(a)=>{try_js()} }
+	}
+	const src_js=document.getElementById('src_js')
+	cm_js=CodeMirror(src_js, cm_opt_js);
+
+	// Python init
+	myres=document.getElementById('myres')
+	myerr=document.getElementById('myerr')
+	const cm_options={
+		lineNumbers: true,
+		tabSize: 2,
+		value: 'print("hi from Python")',
+		mode:'python',
+		theme:'monokai',
+		extraKeys:{ 'Shift-Enter':(a)=>{try_py()} }
+	}
+	const mysrc=document.getElementById('mysrc')
+	cm_py=CodeMirror(mysrc, cm_options);
+    pyodide = await loadPyodide({
+    	stdout:(msg)=>{myres.innerText+=msg+'\n'},
+    	stderr:(msg)=>{myerr.innerText+=msg+'\n'},
+    })
+}
+function console_log(...args) {
+	console.log('console_log', args)
+	res_js.innerText+=args.join(' ')+'\n'
+}
+function try_js(){
+	res_js.innerText=''
+	err_js.innerText=''
+	let t=cm_js.getValue()
+	console.log('js code:', t)
+	t=t.replace(/console\.log/g,'console_log')
+	console.log('js transformed code:', t)
+	try {
+		r=eval(t)
+		if(typeof(r)!='undefined') res_js.innerText+=r
+	}
+	catch(e) {
+		err_js.innerText=e
+	}
+}
+function try_py(){
+	myres.innerText=''
+	myerr.innerText=''
+	const t=cm_py.getValue()
+	try {
+		pyodide.runPython(t)
+	}
+	catch(e) {
+		myerr.innerText=e
+	}
+}
+</script>
+</head>
+<body onload="init()">
+<table style="width:100%"><tr>
+
+<td style="width:50%">
+<button onclick="try_js()">TRY Javascript</button> or hit Shift-Enter
+<div id="src_js"></div>
+<pre id="res_js"></pre>
+<pre id="err_js"></pre>
+</td>
+
+<td style="width:50%">
+<button onclick="try_py()">TRY Python</button> or hit Shift-Enter
+<div id="mysrc"></div>
+<pre id="myres"></pre>
+<pre id="myerr"></pre>
+</td>
+
+</tr></table>
+
+</body>
+</html>
