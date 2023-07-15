@@ -8,23 +8,48 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/python/python.min.js"></script>
 <script src="https://codemirror.net/5/addon/selection/active-line.js"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+<script src="my_firestore.js"></script>
 <style>
 * { font-size: 14pt; }
+body { font-family: Verdana }
 #myerr { color:red; }
 #content { display:flex; flex-wrap: wrap; }
+.click { cursor:pointer; color:blue; }
+.click:hover { color:darkblue; background-color:#ddf; }
 </style>
 <script>
-let cm_py
-let cm_js
-let pyodide
-let myres
-let myerr
-let res_js
-let err_js
-async function init() {
-	// Js init
-	res_js=document.getElementById('res_js')
-	err_js=document.getElementById('err_js')
+const CE= {
+	cm_py:null,
+	cm_js:null,
+	pyodide:null,
+	myres:null,
+	myerr:null,
+	res_js:null,
+	err_js:null,
+	cur_snippet:null
+}
+async function init_py() {
+	CE.myres=document.getElementById('myres')
+	CE.myerr=document.getElementById('myerr')
+	const cm_options={
+		lineNumbers: true,
+		tabSize: 2,
+		value: 'print("hi from Python")',
+		mode:'python',
+		theme:'mbo',
+		styleActiveLine:true,
+			extraKeys:{ 'Shift-Enter':(a)=>{try_py()} }
+	}
+	const mysrc=document.getElementById('mysrc')
+	CE.cm_py=CodeMirror(mysrc, cm_options);
+    CE.pyodide = await loadPyodide({
+    	stdout:(msg)=>{myres.innerText+=msg+'\n'},
+    	stderr:(msg)=>{myerr.innerText+=msg+'\n'},
+    })
+}
+function init_js() {
+	CE.res_js=document.getElementById('res_js')
+	CE.err_js=document.getElementById('err_js')
 	const cm_opt_js={
 		lineNumbers: true,
 		tabSize: 2,
@@ -35,60 +60,127 @@ async function init() {
 		extraKeys:{ 'Shift-Enter':(a)=>{try_js()} }
 	}
 	const src_js=document.getElementById('src_js')
-	cm_js=CodeMirror(src_js, cm_opt_js);
-
-	// Python init
-	myres=document.getElementById('myres')
-	myerr=document.getElementById('myerr')
-	const cm_options={
-		lineNumbers: true,
-		tabSize: 2,
-		value: 'print("hi from Python")',
-		mode:'python',
-		theme:'mbo',
-		styleActiveLine:true,
-		extraKeys:{ 'Shift-Enter':(a)=>{try_py()} }
+	CE.cm_js=CodeMirror(src_js, cm_opt_js);	
+}
+function upd_snip_list(ls) {
+	let t=''
+	for(const it of ls) {
+		t+='<span class="click" onclick="snp_load(\''+it.id+'\')" title="'+it.cre+' '+it.upd+'">'+it.id+'</span> ; '
 	}
-	const mysrc=document.getElementById('mysrc')
-	cm_py=CodeMirror(mysrc, cm_options);
-    pyodide = await loadPyodide({
-    	stdout:(msg)=>{myres.innerText+=msg+'\n'},
-    	stderr:(msg)=>{myerr.innerText+=msg+'\n'},
-    })
+	document.getElementById('snip_list').innerHTML=t
+}
+async function snp_create() {
+	const id=document.getElementById('snipname').value
+	if(!id) {
+		window.alert('Please fill a snippet name')
+		return
+	}
+	CE.cur_snippet=id
+	const obj={
+		js:CE.cm_js.getValue(),
+		py:CE.cm_py.getValue()
+	}
+	const it=await fsCreateDoc('snippets', CE.cur_snippet, obj)
+	document.getElementById('snip_status').innerText='Create done: '+it._cre
+	document.getElementById('cur_snip').innerText=CE.cur_snippet
+	reload_snip_list()
+}
+async function snp_update() {
+	if(!CE.cur_snippet) {
+		window.alert("No snippet currently selected")
+		return
+	}
+	const obj={
+		js:CE.cm_js.getValue(),
+		py:CE.cm_py.getValue()
+	}
+	const it=await fsUpdateDoc('snippets', CE.cur_snippet, obj)
+	set_status('Upd: '+it._upd)
+}
+function set_status(msg) {
+	document.getElementById('snip_status').innerText=msg
+}
+async function snp_reset() {
+	if(!CE.cur_snippet) {
+		window.alert("No snippet currently selected")
+		return
+	}
+	snp_load(CE.cur_snippet)
+	set_status('')
+}
+/** load a snippet and update both editors */
+async function snp_load(id) {
+	CE.cur_snippet=id
+	document.getElementById('cur_snip').innerText=CE.cur_snippet
+	const it=await fsGetDoc('snippets', id)
+	console.log('Loaded', id,':', it)
+	CE.cm_py.setValue(it.py)
+	CE.cm_js.setValue(it.js)
+	set_status('Loaded',id)
+}
+async function reload_snip_list() {
+	const ls=await fsGetIds('snippets')
+	upd_snip_list(ls)	
+}
+function snp_clear() {
+	CE.cm_py.setValue('')
+	CE.cm_js.setValue('')
+	CE.cur_snippet=null
+	document.getElementById('cur_snip').innerText=''
+}
+async function init_firestore() {
+	fsInitDefaultConfig() // initialize cfg for my Firestore SDK, no calls here
+	reload_snip_list() // async
+}
+async function init() {
+	init_js()
+	init_py() // async
+	init_firestore() // async
 }
 function console_log(...args) {
 	console.log('console_log', args)
-	res_js.innerText+=args.join(' ')+'\n'
+	CE.res_js.innerText+=args.join(' ')+'\n'
 }
 function try_js(){
-	res_js.innerText=''
-	err_js.innerText=''
-	let t=cm_js.getValue()
+	CE.res_js.innerText=''
+	CE.err_js.innerText=''
+	let t=CE.cm_js.getValue()
 	console.log('js code:', t)
 	t=t.replace(/console\.log/g,'console_log')
 	console.log('js transformed code:', t)
 	try {
 		r=eval(t)
-		if(typeof(r)!='undefined') res_js.innerText+=r
+		if(typeof(r)!='undefined') CE.res_js.innerText+=r
 	}
 	catch(e) {
-		err_js.innerText=e
+		CE.err_js.innerText=e
 	}
 }
 function try_py(){
-	myres.innerText=''
-	myerr.innerText=''
-	const t=cm_py.getValue()
+	CE.myres.innerText=''
+	CE.myerr.innerText=''
+	const t=CE.cm_py.getValue()
 	try {
-		pyodide.runPython(t)
+		CE.pyodide.runPython(t)
 	}
 	catch(e) {
-		myerr.innerText=e
+		CE.myerr.innerText=e
 	}
 }
 </script>
 </head>
 <body onload="init()">
+<div>
+Load snippet: <span id="snip_list"></span>
+</div>
+<div>
+<button onclick="snp_clear()">Clear</button> ;
+<button onclick="snp_create()">Create</button> <input id="snipname" type="text"> ;
+Current: <b id="cur_snip"></b>
+<button onclick="snp_update()">Update</button>
+<button onclick="snp_reset()">Reset</button> ;
+<span id="snip_status">?</span> ;
+</div>
 <table style="width:100%"><tr>
 
 <td style="width:50%;vertical-align:top">
