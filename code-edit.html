@@ -7,15 +7,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/javascript/javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/python/python.min.js"></script>
 <script src="https://codemirror.net/5/addon/selection/active-line.js"></script>
+<!--script src="https://cdn.jsdelivr.net/npm/cm-show-invisibles@3.1.0/lib/show-invisibles.min.js"></script-->
 <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
 <script src="my_firestore.js"></script>
 <style>
-* { font-size: 14pt; }
+* { font-size: 10pt; }
 body { font-family: Verdana }
+button { }
+p { margin: 0.5em 0em; }
 #myerr { color:red; }
 #content { display:flex; flex-wrap: wrap; }
-.click { cursor:pointer; color:blue; }
+.click { cursor:pointer; padding:0px 3px; color:blue; border:1px solid blue; background-color:#eef; border-radius: 3px; }
 .click:hover { color:darkblue; background-color:#ddf; }
+/** code mirror tab styling */
+.cm-tab { border-bottom: 1px solid #666; }
 </style>
 <script>
 const CE= {
@@ -38,7 +43,8 @@ async function init_py() {
 		mode:'python',
 		theme:'mbo',
 		styleActiveLine:true,
-			extraKeys:{ 'Shift-Enter':(a)=>{try_py()} }
+		//showInvisibles:true, // show-invisibles.min.js : does not display tab, ok for blank and return
+		extraKeys:{ 'Shift-Enter':(a)=>{try_py()} }
 	}
 	const mysrc=document.getElementById('mysrc')
 	CE.cm_py=CodeMirror(mysrc, cm_options);
@@ -65,7 +71,7 @@ function init_js() {
 function upd_snip_list(ls) {
 	let t=''
 	for(const it of ls) {
-		t+='<span class="click" onclick="snp_load(\''+it.id+'\')" title="'+it.cre+' '+it.upd+'">'+it.id+'</span> ; '
+		t+='<span class="click" onclick="snp_load(\''+it.id+'\')" title="'+it.cre+' '+it.upd+'">'+it.id+'</span> '
 	}
 	document.getElementById('snip_list').innerHTML=t
 }
@@ -170,15 +176,15 @@ function try_py(){
 </script>
 </head>
 <body onload="init()">
-<div>
-Load snippet: <span id="snip_list"></span>
-</div>
+<p>
+Snippet: <span id="snip_list"></span>
+</p>
 <div>
 <button onclick="snp_clear()">Clear</button> ;
-<button onclick="snp_create()">Create</button> <input id="snipname" type="text"> ;
+<button onclick="snp_create()">Add</button> <input id="snipname" type="text"> ;
 Current: <b id="cur_snip"></b>
-<button onclick="snp_update()">Update</button>
-<button onclick="snp_reset()">Reset</button> ;
+<button onclick="snp_update()">Save</button>
+<button onclick="snp_reset()">Reload</button> ;
 <span id="snip_status">?</span> ;
 </div>
 <table style="width:100%"><tr>
