@@ -139,6 +139,14 @@ async function init_firestore() {
 	reload_snip_list() // async
 }
 async function init() {
+	document.getElementById('snipname').onkeydown=(e)=>{
+	  if(e.keyCode<32) return true // allow non printable
+	  if(e.shiftKey) return false // block maj
+	  if(e.keyCode>=65 && e.keyCode<=90) return true // a-z
+	  if(e.key=="-") return true
+	  return false // block other chars
+	}
+
 	init_js()
 	init_py() // async
 	init_firestore() // async
@@ -155,8 +163,8 @@ function try_js(){
 	t=t.replace(/console\.log/g,'console_log')
 	console.log('js transformed code:', t)
 	try {
-		r=eval(t)
-		if(typeof(r)!='undefined') CE.res_js.innerText+=r
+		res=eval(t)
+		if(typeof(res)!='undefined') CE.res_js.innerText+="Dernière valeur: "+res+" ("+typeof(res)+")"
 	}
 	catch(e) {
 		CE.err_js.innerText=e
@@ -167,7 +175,8 @@ function try_py(){
 	CE.myerr.innerText=''
 	const t=CE.cm_py.getValue()
 	try {
-		CE.pyodide.runPython(t)
+		res=CE.pyodide.runPython(t)
+		if(typeof(res)!='undefined') CE.myres.innerText+="Dernière valeur: "+res+" ("+typeof(res)+")"
 	}
 	catch(e) {
 		CE.myerr.innerText=e
