@@ -15,7 +15,7 @@
 body { font-family: Verdana }
 button { }
 p { margin: 0.5em 0em; }
-#myerr { color:red; }
+#err_py { color:red; }
 #content { display:flex; flex-wrap: wrap; }
 .click { cursor:pointer; padding:0px 3px; color:blue; border:1px solid blue; background-color:#eef; border-radius: 3px; }
 .click:hover { color:darkblue; background-color:#ddf; }
@@ -27,15 +27,15 @@ const CE= {
 	cm_py:null,
 	cm_js:null,
 	pyodide:null,
-	myres:null,
-	myerr:null,
+	res_py:null,
+	err_py:null,
 	res_js:null,
 	err_js:null,
 	cur_snippet:null
 }
 async function init_py() {
-	CE.myres=document.getElementById('myres')
-	CE.myerr=document.getElementById('myerr')
+	CE.res_py=document.getElementById('res_py')
+	CE.err_py=document.getElementById('err_py')
 	const cm_options={
 		lineNumbers: true,
 		tabSize: 2,
@@ -49,8 +49,8 @@ async function init_py() {
 	const mysrc=document.getElementById('mysrc')
 	CE.cm_py=CodeMirror(mysrc, cm_options);
     CE.pyodide = await loadPyodide({
-    	stdout:(msg)=>{myres.innerText+=msg+'\n'},
-    	stderr:(msg)=>{myerr.innerText+=msg+'\n'},
+    	stdout:(msg)=>{res_py.innerText+=msg+'\n'},
+    	stderr:(msg)=>{err_py.innerText+=msg+'\n'},
     })
 }
 function init_js() {
@@ -114,6 +114,7 @@ async function snp_reset() {
 	snp_load(CE.cur_snippet)
 	set_status('')
 }
+
 /** load a snippet and update both editors */
 async function snp_load(id) {
 	CE.cur_snippet=id
@@ -131,6 +132,10 @@ async function reload_snip_list() {
 function snp_clear() {
 	CE.cm_py.setValue('')
 	CE.cm_js.setValue('')
+	CE.res_js.innerText=''
+	CE.err_js.innerText=''
+	CE.res_py.innerText=''
+	CE.err_py.innerText=''
 	CE.cur_snippet=null
 	document.getElementById('cur_snip').innerText=''
 }
@@ -171,15 +176,15 @@ function try_js(){
 	}
 }
 function try_py(){
-	CE.myres.innerText=''
-	CE.myerr.innerText=''
+	CE.res_py.innerText=''
+	CE.err_py.innerText=''
 	const t=CE.cm_py.getValue()
 	try {
 		res=CE.pyodide.runPython(t)
-		if(typeof(res)!='undefined') CE.myres.innerText+="Dernière valeur: "+res+" ("+typeof(res)+")"
+		if(typeof(res)!='undefined') CE.res_py.innerText+="Dernière valeur: "+res+" ("+typeof(res)+")"
 	}
 	catch(e) {
-		CE.myerr.innerText=e
+		CE.err_py.innerText=e
 	}
 }
 </script>
@@ -190,7 +195,7 @@ Snippet: <span id="snip_list"></span>
 </p>
 <div>
 <button onclick="snp_clear()">Clear</button> ;
-<button onclick="snp_create()">Add</button> <input id="snipname" type="text"> ;
+<button onclick="snp_create()">Add new</button> <input id="snipname" type="text"> ;
 Current: <b id="cur_snip"></b>
 <button onclick="snp_update()">Save</button>
 <button onclick="snp_reset()">Reload</button> ;
@@ -208,8 +213,8 @@ Current: <b id="cur_snip"></b>
 <td style="width:50%;vertical-align:top">
 <button onclick="try_py()">TRY Python</button> or hit Shift-Enter
 <div id="mysrc"></div>
-<pre id="myres"></pre>
-<pre id="myerr"></pre>
+<pre id="res_py"></pre>
+<pre id="err_py"></pre>
 </td>
 
 </tr></table>
