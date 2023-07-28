@@ -1,7 +1,7 @@
 <html>
 <head>
 <link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.css" rel="stylesheet" />
-<link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/monokai.min.css" rel="stylesheet" />
+<!--link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/monokai.min.css" rel="stylesheet" /-->
 <link  href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/mbo.min.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/javascript/javascript.min.js"></script>
@@ -17,6 +17,7 @@ button { }
 p { margin: 0.5em 0em; }
 #err_py { color:red; }
 #content { display:flex; flex-wrap: wrap; }
+.selected { padding:0px 3px; color:white; border:1px solid black; background-color:#222; border-radius: 3px; }
 .click { cursor:pointer; padding:0px 3px; color:blue; border:1px solid blue; background-color:#eef; border-radius: 3px; }
 .click:hover { color:darkblue; background-color:#ddf; }
 /** code mirror tab styling */
@@ -24,30 +25,62 @@ p { margin: 0.5em 0em; }
 </style>
 <script>
 const CE= {
+	/** tells if something as changed to enable some buttons */
+	changed:false,
 	cm_py:null,
 	cm_js:null,
+	/** Python WASM wrapper lib */
 	pyodide:null,
 	res_py:null,
 	err_py:null,
 	res_js:null,
 	err_js:null,
+	/** list of snippets for redraw */
+	snippets:null,
+	/** currently selected snippet */
 	cur_snippet:null
+}
+
+/** Js or Python content changed*/
+function on_any_change() {
+	if(CE.changed) return // already in changed mode
+	CE.changed=true
+	set_status('Text changed')
+	redraw_menu()
+}
+/** switch focused editor */
+function on_chg_editor(evt) {
+	if(evt.options.mode=='javascript') {
+		CE.cm_py.focus()
+	}
+	else {
+		CE.cm_js.focus()
+	}
+}
+/** @return a code mirror instance */
+function init_code_mirror(elm_id, mode, try_fct) {
+	const opt={
+		lineNumbers: true,
+		tabSize: 2,
+		value:'',
+		mode:mode,
+		theme:'mbo',
+		styleActiveLine:true,
+		extraKeys:{
+			'Shift-Enter':try_fct,
+			'Shift-Tab':on_chg_editor,
+			'Shift-Esc':snp_clear
+		}
+	}
+	const src=document.getElementById(elm_id)
+	const cm=CodeMirror(src, opt);	
+	cm.on('change', (editor)=>{on_any_change()})
+	return cm
 }
 async function init_py() {
 	CE.res_py=document.getElementById('res_py')
 	CE.err_py=document.getElementById('err_py')
-	const cm_options={
-		lineNumbers: true,
-		tabSize: 2,
-		value: 'print("hi from Python")',
-		mode:'python',
-		theme:'mbo',
-		styleActiveLine:true,
-		//showInvisibles:true, // show-invisibles.min.js : does not display tab, ok for blank and return
-		extraKeys:{ 'Shift-Enter':(a)=>{try_py()} }
-	}
-	const mysrc=document.getElementById('mysrc')
-	CE.cm_py=CodeMirror(mysrc, cm_options);
+	CE.cm_py=init_code_mirror('src_py', 'python', try_py)
     CE.pyodide = await loadPyodide({
     	stdout:(msg)=>{res_py.innerText+=msg+'\n'},
     	stderr:(msg)=>{err_py.innerText+=msg+'\n'},
@@ -56,22 +89,26 @@ async function init_py() {
 function init_js() {
 	CE.res_js=document.getElementById('res_js')
 	CE.err_js=document.getElementById('err_js')
-	const cm_opt_js={
-		lineNumbers: true,
-		tabSize: 2,
-		value:'console.log("hi from Javascript")',
-		mode:'javascript',
-		theme:'mbo',
-		styleActiveLine:true,
-		extraKeys:{ 'Shift-Enter':(a)=>{try_js()} }
-	}
-	const src_js=document.getElementById('src_js')
-	CE.cm_js=CodeMirror(src_js, cm_opt_js);	
+	CE.cm_js=init_code_mirror('src_js', 'javascript', try_js)
 }
-function upd_snip_list(ls) {
+/** update buttons states depending on context */
+function redraw_menu() {
+	document.getElementById('bt_add').disabled=!CE.changed
+	document.getElementById('bt_save').disabled=!(CE.cur_snippet && CE.changed)
+	document.getElementById('bt_reload').disabled=!(CE.cur_snippet && CE.changed)
+}
+function upd_snip_list() {
 	let t=''
-	for(const it of ls) {
-		t+='<span class="click" onclick="snp_load(\''+it.id+'\')" title="'+it.cre+' '+it.upd+'">'+it.id+'</span> '
+	if(!CE.snippets) t='snippets list not loaded yet'
+	else {
+		for(const it of CE.snippets) {
+			if(it.id==CE.cur_snippet) {
+				t+='<span class="selected">'+it.id+'</span> '
+			}
+			else {
+				t+='<span class="click" onclick="snp_load(\''+it.id+'\')" title="'+it.cre+' '+it.upd+'">'+it.id+'</span> '
+			}
+		}		
 	}
 	document.getElementById('snip_list').innerHTML=t
 }
@@ -112,22 +149,24 @@ async function snp_reset() {
 		return
 	}
 	snp_load(CE.cur_snippet)
-	set_status('')
 }
 
 /** load a snippet and update both editors */
 async function snp_load(id) {
 	CE.cur_snippet=id
 	document.getElementById('cur_snip').innerText=CE.cur_snippet
+	upd_snip_list()
 	const it=await fsGetDoc('snippets', id)
 	console.log('Loaded', id,':', it)
 	CE.cm_py.setValue(it.py)
 	CE.cm_js.setValue(it.js)
-	set_status('Loaded',id)
+	set_status('Loaded: '+id)
+	CE.changed=false
+	redraw_menu()
 }
 async function reload_snip_list() {
-	const ls=await fsGetIds('snippets')
-	upd_snip_list(ls)	
+	CE.snippets=await fsGetIds('snippets')
+	upd_snip_list()	
 }
 function snp_clear() {
 	CE.cm_py.setValue('')
@@ -138,6 +177,10 @@ function snp_clear() {
 	CE.err_py.innerText=''
 	CE.cur_snippet=null
 	document.getElementById('cur_snip').innerText=''
+	upd_snip_list()
+	CE.changed=false
+	redraw_menu()
+	return false // prevent event to bubble up to the browser
 }
 async function init_firestore() {
 	fsInitDefaultConfig() // initialize cfg for my Firestore SDK, no calls here
@@ -151,10 +194,11 @@ async function init() {
 	  if(e.key=="-") return true
 	  return false // block other chars
 	}
-
+	redraw_menu()
 	init_js()
 	init_py() // async
-	init_firestore() // async
+	CE.cm_js.focus()
+	//init_firestore() // async
 }
 function console_log(...args) {
 	console.log('console_log', args)
@@ -194,25 +238,25 @@ function try_py(){
 Snippet: <span id="snip_list"></span>
 </p>
 <div>
-<button onclick="snp_clear()">Clear</button> ;
-<button onclick="snp_create()">Add new</button> <input id="snipname" type="text"> ;
+<button onclick="snp_clear()">Clear (S-Esc)</button> ;
+<button id="bt_add" onclick="snp_create()">Add new</button> <input id="snipname" type="text"> ;
 Current: <b id="cur_snip"></b>
-<button onclick="snp_update()">Save</button>
-<button onclick="snp_reset()">Reload</button> ;
+<button id="bt_save" onclick="snp_update()">Save</button>
+<button id="bt_reload" onclick="snp_reset()">Reload</button> ;
 <span id="snip_status">?</span> ;
 </div>
 <table style="width:100%"><tr>
 
 <td style="width:50%;vertical-align:top">
-<button onclick="try_js()">TRY Javascript</button> or hit Shift-Enter
+<button onclick="try_js()">TRY Javascript</button> or hit Shift-Enter ; Shift-Tab to other editor
 <div id="src_js"></div>
 <pre id="res_js"></pre>
 <pre id="err_js"></pre>
 </td>
 
 <td style="width:50%;vertical-align:top">
-<button onclick="try_py()">TRY Python</button> or hit Shift-Enter
-<div id="mysrc"></div>
+<button onclick="try_py()">TRY Python</button> or hit Shift-Enter ; Shift-Tab to other editor
+<div id="src_py"></div>
 <pre id="res_py"></pre>
 <pre id="err_py"></pre>
 </td>
