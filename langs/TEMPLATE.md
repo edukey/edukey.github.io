@@ -48,37 +48,17 @@ compile time directives : const when discard
 
 ## Comments
 
-```
-# full single line comment
-echo "hi" # end of line comment
-echo "hi" ## documentation comments, are part of syntax tree
-#[ multi lines comment ...
-... continues here
-]#
-#[ comments #[ are ]# nestable ]#
-echo #[ code comment ]# "hi"
-```
+full single line comment
+end of line comment
+documentation comments, are part of syntax tree
+multi lines comment
+nestable comments
+inner line comments : nim:echo #[ code comment ]# "hi"
 
 ## Blocks
 
-https://nim-by-example.github.io/block/
-
 indent (default) or parenthesis+semicolon (recommend for single lines only)
-
-```
-while true:
-	echo "hi"
-	break
-
-while true (echo "hi" ; break)
-
-block:
-	let a="hi" # a only within scope of this block
-	echo a
-
-block foo: # named block for breaking multiple loops
-	...
-```
+label (for break to)
 
 ## Variables
 
@@ -86,30 +66,12 @@ block foo: # named block for breaking multiple loops
 
 Declaration and Assignation
 
-`var`:mutable, `let`:immutable, `const`:compile time evaluation (like #define)
+mutable, immutable, compile time evaluation (like #define)
+infered
+multi vars same value
+multi vars same keyword
 
-```
-var s = "foo" # mutable, infered string
-s = "bar"
-var i: int # initialized to 0
-var f = 1.0 # infered float
-var c = 'a' # single char
-var b = true # boolean
-var x, y: int # declare multiple on same line
-var x, y = 3 # both variables are assigned to 3
-var # declare multiple lines with single `var` keyword and proper indentation
-		x: int
-		y: int
-
-let sc = "foo" # immutable
-#sc = "bar" # Compile Fails: cannot modify a let variable
-
-const sc2 = 1+2 # evaluated at compile time
-const sc3 = f(3) # compiler can execute nim code at compile time, here we consider a f() proc has been defined
-#const l = readLine(stdin) # Compile Fails: cannot be evaluated by compiler
-```
-
-Also special variable `result` used for returned value instead of return keyword, having the type of function return
+special var name : `result`(nim)
 
 ## Types
 
@@ -119,25 +81,6 @@ int8, int16, int32, int64, and int same size as pointer
 uint8, uint16, uint32, uint64, and uint
 float32, float64, and float
 char is alias to uint8
-
-```
-var
-	i = 1
-	m = 1_000_000 # thousands separator in number literal
-	h = 0xff # hexa literal
-	b = 0b1001 # binary literal
-	o = 0o01234567 # octal literal
-	i2: int # default to 0
-	f = 1.0
-	f2: float # default to 0.0
-	e = 1.0e9 # scientific literal for float
-let
-  a: int8 = 0x7F # Works
-  b: uint8 = 0b1111_1111 # Works
-  d = 0xFF # type is int
-  c: uint8 = 256 # Compile time error
-echo 4/2 # result is float
-```
 
 ### String
 
