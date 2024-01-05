@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html, body {
+	width:100%
+	height:100%;
+	margin:0;
+}
+body {
+	background-color:black;
+	color: white;
+	font-size: 10vh;
+}
+div.m {
+	border:1px solid white;
+	height:100vw;
+	width:100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;	
+	transform: rotateY(180deg) rotate(90deg);
+}
+span.l {
+	font-size: 5vh;
+}
+</style>
+<script>
+let G_watchID=null
+let G_pos=null
+function on_tick() {
+	const d=new Date()
+	const j=d.toLocaleDateString('fr-FR',{weekday:'short',month:'short',day:'2-digit'})
+	const t=d.toLocaleTimeString('fr-FR') // force FR as brower may be in US
+	let g=''
+	if(G_pos) {
+		//console.log('pos:', G_pos)
+		g+='<span class="l">'
+		if(G_pos.coords.heading) {
+			g+='<br>'+G_pos.coords.heading+'deg'
+			g+=' '+G_pos.coords.speed+'m/s'
+		}
+		g+='<br>lat:'+G_pos.coords.latitude
+		g+=' lng:'+G_pos.coords.longitude
+		if(G_pos.coords.altitude) {
+			g+=' alt:'+G_pos.coords.altitude	
+		} 
+		g+='<br>acc:'+G_pos.coords.accuracy+'m'
+		if(G_pos.coords.altitudeAccuracy) {
+			g+=' '+G_pos.coords.altitudeAccuracy+'m Alt'
+		}
+		g+='</span>'
+	}
+	document.getElementById('d').innerHTML='<span>'+j+'<br>'+t+g+'</span>'
+}
+function main() {
+	if("geolocation" in navigator) {
+		// no error CB, no options
+		navigator.geolocation.getCurrentPosition((p)=>{G_pos=p}, (e)=>{console.log("failed geo")}, null)
+		//G_watchID=navigator.geolocation.watchPosition((p)=>{G_pos=p}, (e)=>{console.log("failed geo")}, null)
+		//console.log('watch_id:', G_watchID)
+		//navigator.geolocation.clearWatch(G_watchID)
+	}
+	window.setInterval(on_tick,1000)
+}
+</script>
+</head>
+<body onload="main()">
+<div id="d" class="m">Bonjour !</div>
+</body>
+</html>
