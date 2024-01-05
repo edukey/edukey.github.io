@@ -14,7 +14,7 @@ body {
 }
 div.m {
 	border:1px solid white;
-	height:100vw;
+	height:100%;
 	width:100%;
 	display: flex;
 	align-items: center;
@@ -33,10 +33,10 @@ function on_tick() {
 	const d=new Date()
 	const j=d.toLocaleDateString('fr-FR',{weekday:'short',month:'short',day:'2-digit'})
 	const t=d.toLocaleTimeString('fr-FR') // force FR as brower may be in US
-	let g=''
+	document.getElementById('d').innerHTML=+j+'<br>'+t
 	if(G_pos) {
+    		let g=''
 		//console.log('pos:', G_pos)
-		g+='<span class="l">'
 		if(G_pos.coords.heading) {
 			g+='<br>'+G_pos.coords.heading+'deg'
 			g+=' '+G_pos.coords.speed+'m/s'
@@ -50,16 +50,15 @@ function on_tick() {
 		if(G_pos.coords.altitudeAccuracy) {
 			g+=' '+G_pos.coords.altitudeAccuracy+'m Alt'
 		}
-		g+='</span>'
+		document.getElementById('l').innerHTML=g
 	}
-	document.getElementById('d').innerHTML='<span>'+j+'<br>'+t+g+'</span>'
+	
 }
 function main() {
 	if("geolocation" in navigator) {
-		// no error CB, no options
 		navigator.geolocation.getCurrentPosition((p)=>{G_pos=p}, (e)=>{console.log("failed geo")}, null)
-		//G_watchID=navigator.geolocation.watchPosition((p)=>{G_pos=p}, (e)=>{console.log("failed geo")}, null)
-		//console.log('watch_id:', G_watchID)
+		G_watchID=navigator.geolocation.watchPosition((p)=>{G_pos=p}, null, null)
+		console.log('watch_id:', G_watchID)
 		//navigator.geolocation.clearWatch(G_watchID)
 	}
 	window.setInterval(on_tick,1000)
@@ -67,6 +66,6 @@ function main() {
 </script>
 </head>
 <body onload="main()">
-<div id="d" class="m">Bonjour !</div>
+<div class="m"><span id="d">Bonjour !<span id="l" class="l"><br>geo infos</span></span></div>
 </body>
 </html>
