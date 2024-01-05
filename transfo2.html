@@ -33,7 +33,7 @@ function on_tick() {
 	const d=new Date()
 	const j=d.toLocaleDateString('fr-FR',{weekday:'short',month:'short',day:'2-digit'})
 	const t=d.toLocaleTimeString('fr-FR') // force FR as brower may be in US
-	document.getElementById('d').innerHTML=+j+'<br>'+t
+	document.getElementById('d').innerHTML=j+'<br>'+t
 	if(G_pos) {
     		let g=''
 		//console.log('pos:', G_pos)
@@ -66,6 +66,6 @@ function main() {
 </script>
 </head>
 <body onload="main()">
-<div class="m"><span id="d">Bonjour !<span id="l" class="l"><br>geo infos</span></span></div>
+<div class="m"><span><span id="d">Bonjour !</span><span id="l" class="l"><br>geo infos</span></span></div>
 </body>
 </html>
