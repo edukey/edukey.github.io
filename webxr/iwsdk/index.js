@@ -109,16 +109,6 @@ async function main() {
     console.warn("Failed to create world");
     return;
   }
-  w.registerSystem(iw.LocomotionSystem, {
-    configData: {
-      slidingSpeed: 0,
-      turningMethod: 1,
-      // Snap
-      turningAngle: 45,
-      rayGravity: -0.4,
-      useWorker: true
-    }
-  });
   const gFloor = new iw.PlaneGeometry(100, 100);
   const mFloor = new iw.Mesh(
     gFloor,
