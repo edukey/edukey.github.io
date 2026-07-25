@@ -1,6 +1,6 @@
 import * as iw from "./iwsdk.min.js";
 const LOG = document.getElementById("log");
-myLog("built at 2026-07-25T21:05:19+02:00");
+myLog("built at 2026-07-25T21:16:41+02:00");
 myLog("iwsdk imported");
 main_safe();
 function myLog(txt) {
@@ -112,7 +112,7 @@ async function main() {
   }
   w.registerSystem(iw.LocomotionSystem, {
     configData: {
-      slidingSpeed: 0,
+      slidingSpeed: 100,
       turningMethod: 1,
       // Snap
       turningAngle: 45,
