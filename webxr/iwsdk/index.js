@@ -1,5 +1,4 @@
 import * as iw from "./iwsdk.min.js";
-console.log("build at 2026-07-25T20:26:03+02:00")
 const LOG = document.getElementById("log");
 myLog("iwsdk imported");
 main_safe();
