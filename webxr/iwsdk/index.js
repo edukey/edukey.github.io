@@ -1,5 +1,5 @@
 import * as iw from "./iwsdk.min.js";
-console.log("build at 2026-07-25T18:49:18+02:00")
+console.log("build at 2026-07-25T19:16:02+02:00")
 const LOG = document.getElementById("log");
 myLog("iwsdk imported");
 main();
@@ -101,11 +101,15 @@ async function main() {
     console.warn("Failed to create world");
     return;
   }
-  const gPlane = new iw.PlaneGeometry(100, 100);
-  const mPlane = new iw.Mesh(gPlane);
-  w.scene.add(mPlane);
-  const ePlane = w.createTransformEntity(mPlane);
-  ePlane.addComponent(iw.LocomotionEnvironment, {
+  const gFloor = new iw.PlaneGeometry(10, 10);
+  const mFloor = new iw.Mesh(
+    gFloor,
+    new iw.MeshBasicMaterial({ visible: false })
+  );
+  mFloor.rotation.x = -Math.PI / 2;
+  w.scene.add(mFloor);
+  const eFloor = w.createTransformEntity(mFloor);
+  eFloor.addComponent(iw.LocomotionEnvironment, {
     type: iw.EnvironmentType.STATIC
   });
   myLog("World created");
