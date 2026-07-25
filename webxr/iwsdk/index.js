@@ -1,5 +1,5 @@
 import * as iw from "./iwsdk.min.js";
-console.log("build at 2026-07-25T18:12:18+02:00")
+console.log("build at 2026-07-25T18:19:31+02:00")
 const LOG = document.getElementById("log");
 myLog("iwsdk imported");
 main();
@@ -22,7 +22,10 @@ async function SceneFromProject(w, url) {
     const scene = await ldr.parseAsync(project.scene);
     w.scene.add(scene);
     myLog(`Add project as World entity`);
-    const _ent = w.createTransformEntity(scene);
+    const ent = w.createTransformEntity(scene);
+    ent.addComponent(iw.LocomotionEnvironment, {
+      type: iw.EnvironmentType.STATIC
+    });
     myLog(`Project Ready`);
     return true;
   } catch (e) {
