@@ -1,5 +1,5 @@
 import * as iw from "./iwsdk.min.js";
-console.log("build at 2026-07-25T17:47:15+02:00")
+console.log("build at 2026-07-25T18:12:18+02:00")
 const LOG = document.getElementById("log");
 myLog("iwsdk imported");
 main();
@@ -90,8 +90,9 @@ async function main() {
       }
     },
     features: {
-      grabbing: true,
-      sceneUnderstanding: { showWireFrame: true }
+      locomotion: true
+      // grabbing: true,
+      // sceneUnderstanding: { showWireFrame: true },
     }
   };
   myLog("Creating world...");
