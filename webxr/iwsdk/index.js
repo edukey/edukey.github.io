@@ -1,5 +1,5 @@
 import * as iw from "./iwsdk.min.js";
-console.log("build at 2026-07-25T18:19:31+02:00")
+console.log("build at 2026-07-25T18:49:18+02:00")
 const LOG = document.getElementById("log");
 myLog("iwsdk imported");
 main();
@@ -22,10 +22,7 @@ async function SceneFromProject(w, url) {
     const scene = await ldr.parseAsync(project.scene);
     w.scene.add(scene);
     myLog(`Add project as World entity`);
-    const ent = w.createTransformEntity(scene);
-    ent.addComponent(iw.LocomotionEnvironment, {
-      type: iw.EnvironmentType.STATIC
-    });
+    const _ent = w.createTransformEntity(scene);
     myLog(`Project Ready`);
     return true;
   } catch (e) {
@@ -104,6 +101,13 @@ async function main() {
     console.warn("Failed to create world");
     return;
   }
+  const gPlane = new iw.PlaneGeometry(100, 100);
+  const mPlane = new iw.Mesh(gPlane);
+  w.scene.add(mPlane);
+  const ePlane = w.createTransformEntity(mPlane);
+  ePlane.addComponent(iw.LocomotionEnvironment, {
+    type: iw.EnvironmentType.STATIC
+  });
   myLog("World created");
   if (!await SceneFromProject(w, "project.json")) {
     return;
