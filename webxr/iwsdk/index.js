@@ -1,5 +1,5 @@
 import * as iw from "./iwsdk.min.js";
-console.log("build at 2026-07-25T19:16:02+02:00")
+console.log("build at 2026-07-25T19:41:42+02:00")
 const LOG = document.getElementById("log");
 myLog("iwsdk imported");
 main();
@@ -80,7 +80,8 @@ async function main() {
   }
   const opts = {
     xr: {
-      sessionMode: iw.SessionMode.ImmersiveAR,
+      // sessionMode: iw.SessionMode.ImmersiveAR,
+      sessionMode: iw.SessionMode.ImmersiveVR,
       features: {
         handTracking: true,
         hitTest: true,
@@ -90,7 +91,13 @@ async function main() {
       }
     },
     features: {
-      locomotion: true
+      // https://github.com/facebook/immersive-web-sdk/blob/main/packages/core/src/locomotion/locomotion.ts
+      // true or object to override default values
+      locomotion: {
+        enableJumping: true,
+        slidingSpeed: 0,
+        useWorker: true
+      }
       // grabbing: true,
       // sceneUnderstanding: { showWireFrame: true },
     }
@@ -101,7 +108,7 @@ async function main() {
     console.warn("Failed to create world");
     return;
   }
-  const gFloor = new iw.PlaneGeometry(10, 10);
+  const gFloor = new iw.PlaneGeometry(100, 100);
   const mFloor = new iw.Mesh(
     gFloor,
     new iw.MeshBasicMaterial({ visible: false })
