@@ -1,6 +1,6 @@
 import * as iw from "./iwsdk.min.js";
 const LOG = document.getElementById("log");
-myLog("built at 2026-07-25T20:36:14+02:00");
+myLog("built at 2026-07-25T20:47:37+02:00");
 myLog("iwsdk imported");
 main_safe();
 function myLog(txt) {
@@ -130,7 +130,6 @@ async function main() {
   bt.onclick = () => {
     myLog("Launching XR mode ...");
     w.launchXR();
-    myLog("XR mode launched");
   };
 }
 async function main_safe() {
