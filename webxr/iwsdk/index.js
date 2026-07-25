@@ -1,6 +1,6 @@
 import * as iw from "./iwsdk.min.js";
 const LOG = document.getElementById("log");
-myLog("built at 2026-07-25T20:56:48+02:00");
+myLog("built at 2026-07-25T21:05:19+02:00");
 myLog("iwsdk imported");
 main_safe();
 function myLog(txt) {
@@ -82,6 +82,7 @@ async function main() {
     xr: {
       // sessionMode: iw.SessionMode.ImmersiveAR,
       sessionMode: iw.SessionMode.ImmersiveVR,
+      // must not use AR only feature else crash : plane/mesh detect, anchors
       features: {
         handTracking: true,
         hitTest: true
@@ -93,8 +94,7 @@ async function main() {
     features: {
       // https://github.com/facebook/immersive-web-sdk/blob/main/packages/core/src/locomotion/locomotion.ts
       // true or object to override default values
-      locomotion: true
-      // enables the LocomotionSystem with default config
+      // locomotion: true, // enables the LocomotionSystem with default config
       // locomotion: {
       // enableJumping: true, // not a config value here
       // slidingSpeed: 0, // not a config value here
@@ -110,6 +110,16 @@ async function main() {
     console.warn("Failed to create world");
     return;
   }
+  w.registerSystem(iw.LocomotionSystem, {
+    configData: {
+      slidingSpeed: 0,
+      turningMethod: 1,
+      // Snap
+      turningAngle: 45,
+      rayGravity: -0.4,
+      useWorker: true
+    }
+  });
   const gFloor = new iw.PlaneGeometry(100, 100);
   const mFloor = new iw.Mesh(
     gFloor,
@@ -130,6 +140,7 @@ async function main() {
   bt.onclick = () => {
     myLog("Launching XR mode ...");
     w.launchXR();
+    myLog("XR mode launched");
   };
 }
 async function main_safe() {
