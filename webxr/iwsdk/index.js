@@ -1,8 +1,8 @@
 import * as iw from "./iwsdk.min.js";
-console.log("build at 2026-07-25T19:41:42+02:00")
+console.log("build at 2026-07-25T20:22:35+02:00")
 const LOG = document.getElementById("log");
 myLog("iwsdk imported");
-main();
+main_safe();
 function myLog(txt) {
   console.log(txt);
   if (LOG) LOG.innerText = txt + "\n" + LOG.innerText;
@@ -93,11 +93,13 @@ async function main() {
     features: {
       // https://github.com/facebook/immersive-web-sdk/blob/main/packages/core/src/locomotion/locomotion.ts
       // true or object to override default values
-      locomotion: {
-        enableJumping: true,
-        slidingSpeed: 0,
-        useWorker: true
-      }
+      locomotion: true
+      // enables the LocomotionSystem with default config
+      // locomotion: {
+      // enableJumping: true, // not a config value here
+      // slidingSpeed: 0, // not a config value here
+      // useWorker: true, // default value
+      // },
       // grabbing: true,
       // sceneUnderstanding: { showWireFrame: true },
     }
@@ -108,6 +110,16 @@ async function main() {
     console.warn("Failed to create world");
     return;
   }
+  w.registerSystem(iw.LocomotionSystem, {
+    configData: {
+      slidingSpeed: 0,
+      turningMethod: 1,
+      // Snap
+      turningAngle: 45,
+      rayGravity: -0.4,
+      useWorker: true
+    }
+  });
   const gFloor = new iw.PlaneGeometry(100, 100);
   const mFloor = new iw.Mesh(
     gFloor,
@@ -128,5 +140,14 @@ async function main() {
   bt.onclick = () => {
     myLog("Launching XR mode ...");
     w.launchXR();
+    myLog("XR mode launched");
   };
+}
+async function main_safe() {
+  try {
+    await main();
+  } catch (e) {
+    myLog(`Exception occured: ${e}`);
+  }
+  myLog("Init completed");
 }
