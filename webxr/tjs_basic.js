@@ -210,16 +210,16 @@ async function init() {
 	const my_controllers = {
 		firstError: null,
 		right: initCtrlLow('right',{
-			up:()=>{move(renderer.xr, 1)},
-			down:()=>{move(renderer.xr, -1)},
 			left:()=>{rotateUser(renderer.xr,45)},
 			right:()=>{rotateUser(renderer.xr,-45)},
+			trig:()=>{move(renderer.xr, 1)},
+			grip:()=>{move(renderer.xr, -1)},
 			by:()=>{move(renderer.xr, 0.1)},
 			ax:()=>{move(renderer.xr, -0.1)}
 		}),
 		left: initCtrlLow('left',{
-			up:()=>{move(renderer.xr, 0.1)},
-			down:()=>{move(renderer.xr, -0.1)},
+			trig:()=>{move(renderer.xr, 0.1)},
+			grip:()=>{move(renderer.xr, -0.1)},
 			left:()=>{rotateUser(renderer.xr,22.5)},
 			right:()=>{rotateUser(renderer.xr,-22.5)}
 		})
@@ -349,10 +349,10 @@ function evtCtrlLow(c, g) {
 		errCtrlLow(c, 'evtCtrlLow '+c.name, 'Not at leat two axes, but: '+g.axes.length)
 		return
 	}
-	evtCtrlLowPressed(c, c.left, g.axes.length>2 && g.axes[2]<-0.8, "THB X Left")
-	evtCtrlLowPressed(c, c.right, g.axes.length>2 && g.axes[2]>0.8, "THB X Right")
-	evtCtrlLowPressed(c, c.up, g.axes.length>3 && g.axes[3]<-0.8, "THB Y Up")
-	evtCtrlLowPressed(c, c.down, g.axes.length>3 && g.axes[3]>0.8, "THB Y Down")
+	evtCtrlLowPressed(c, c.left, g.axes.length>2 && g.axes[2]==-1, "THB X Left")
+	evtCtrlLowPressed(c, c.right, g.axes.length>2 && g.axes[2]==1, "THB X Right")
+	evtCtrlLowPressed(c, c.up, g.axes.length>3 && g.axes[3]==-1, "THB Y Up")
+	evtCtrlLowPressed(c, c.down, g.axes.length>3 && g.axes[3]==1, "THB Y Down")
 	// if(!c.firstMsg) {
 	//  	myLog(`${c.name} first evtCtrlLow axes: ${g.hand} ${g.axes.length} ${g.axes[0]} ${g.axes[1]} ${g.axes[2]} ${g.axes[3]}`)
 	//  	c.firstMsg = true
