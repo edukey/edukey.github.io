@@ -1,9 +1,11 @@
 import * as THREE from 'https://threejs.org/build/three.module.js'
 // import { VRButton } from 'https://threejs.org/examples/jsm/webxr/VRButton.js'
-import StatsVR from 'https://edukey.github.io/webxr/statsvr.js'
+// import StatsVR from 'https://edukey.github.io/webxr/statsvr.js'
 
 let LOG = null
 let statsVR = null
+let HUD = null
+let HUD_txu = null
 
 init()
 
@@ -59,7 +61,7 @@ function initCtrl(xr) {
 	c0.addEventListener( 'squeezestart', ()=>{move(xr, 1)})
 	c0.addEventListener( 'squeezeend', ()=>{})
 
-	const c1=xr.getController( 0 )
+	const c1=xr.getController( 1 )
 	c1.addEventListener( 'selectstart', ()=>{move(xr, -0.1)})
 	c1.addEventListener( 'selectend', ()=>{})
 	c1.addEventListener( 'squeezestart', ()=>{move(xr, -1)})
@@ -97,7 +99,37 @@ function move(xr, dist) {
 	console.log("XR Direction delta :", delta)
 
 	// 5. Update WebXR Reference Space
+	setHud(dist, delta.x, delta.z)
 	teleportOffsetXZ(xr, delta.x, delta.z)
+}
+
+function setHud(a, b, c) {
+	HUD_txu.needsUpdate = true // tell the texture to update from canvas
+	const ctx = HUD.getContext('2d')
+	ctx.strokeStyle = '#035363' // beginPath()/moveTo(x,y)/lineTo(x,y)/stroke()
+  ctx.fillStyle = "#00cc00" // font color
+  ctx.font = "13px Calibri"
+  ctx.clearRect(0, 0, HUD.width, HUD.height)
+  if(a) ctx.fillText(a, 0, 15)
+  if(b) ctx.fillText(b, 0, 30)
+  if(c) ctx.fillText(c, 0, 45)
+}
+
+/** create a HUD Canvas to draw text to */
+function initHudCanvas(camera) {
+		const charPix = 15
+    HUD = document.createElement('canvas');
+    HUD.width = charPix*10;
+    HUD.height = HUD.width;
+    HUD_txu = new THREE.Texture(HUD);
+    const material = new THREE.MeshBasicMaterial({ map: HUD_txu, depthTest: false, transparent: true });
+    const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+    const statsPlane = new THREE.Mesh(geometry, material);
+    statsPlane.position.x = 0;
+    statsPlane.position.y = 1;
+    statsPlane.position.z = -5;
+    statsPlane.renderOrder = 9999;
+    camera.add(statsPlane);
 }
 
 async function init() {
@@ -119,6 +151,9 @@ async function init() {
 	camera.position.set( 0, 1.75, 4 )
 	scene.add( camera )
 
+	initHudCanvas(camera)
+	setHud('hello','the','world')
+
 	// above the scene, with color fading from the sky color to the ground color. no shadows https://threejs.org/docs/#HemisphereLight 
 	scene.add( new THREE.HemisphereLight() )
 
@@ -135,8 +170,8 @@ async function init() {
 	const vp_width = 800
 	const vp_height = vp_width
 
-	statsVR = new StatsVR(scene, camera)
-	statsVR.setY(1)
+//	statsVR = new StatsVR(scene, camera)
+//	statsVR.setY(1)
 
 	// https://threejs.org/docs/#WebGLRenderer
 	const renderer = new THREE.WebGLRenderer( { antialias: true } ) // will create a canvas as not specified
@@ -144,7 +179,7 @@ async function init() {
 	renderer.setSize( vp_width, vp_height )
 	renderer.outputEncoding = THREE.sRGBEncoding
 	renderer.setAnimationLoop(()=>{
-		statsVR.update()
+		//statsVR.update()
 		renderer.render( scene, camera )
 	})
 	renderer.xr.enabled = true
