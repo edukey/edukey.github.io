@@ -178,7 +178,7 @@ async function init() {
 	scene.add( camera )
 
 	HUD = initHud(camera)
-	setHud(HUD, 'hello','the','world')
+	setHud(HUD, '---','A','---')
 
 	// above the scene, with color fading from the sky color to the ground color. no shadows https://threejs.org/docs/#HemisphereLight 
 	scene.add( new THREE.HemisphereLight() )
