@@ -122,7 +122,7 @@ function move(xr, dist) {
 	console.log("XR Direction delta :", delta)
 
 	// 5. Update WebXR Reference Space
-	setHud(HUD, dist, delta.x, delta.z)
+	// setHud(HUD, dist, delta.x, delta.z)
 	teleportOffsetXZ(xr, delta.x, delta.z)
 }
 
@@ -224,7 +224,7 @@ async function init() {
 			right:()=>{rotateUser(renderer.xr,-22.5)}
 		})
 	}
-	initCtrl(renderer.xr)
+	// initCtrl(renderer.xr)
 
 	renderer.setAnimationLoop(()=>{
 		//statsVR.update()
@@ -349,10 +349,10 @@ function evtCtrlLow(c, g) {
 		errCtrlLow(c, 'evtCtrlLow '+c.name, 'Not at leat two axes, but: '+g.axes.length)
 		return
 	}
-	evtCtrlLowPressed(c, c.left, g.axes.length>2 && g.axes[2]<0, "THB X Left")
-	evtCtrlLowPressed(c, c.right, g.axes.length>2 && g.axes[2]>0, "THB X Right")
-	evtCtrlLowPressed(c, c.up, g.axes.length>3 && g.axes[3]<0, "THB Y Up")
-	evtCtrlLowPressed(c, c.down, g.axes.length>3 && g.axes[3]>0, "THB Y Down")
+	evtCtrlLowPressed(c, c.left, g.axes.length>2 && g.axes[2]<-0.8, "THB X Left")
+	evtCtrlLowPressed(c, c.right, g.axes.length>2 && g.axes[2]>0.8, "THB X Right")
+	evtCtrlLowPressed(c, c.up, g.axes.length>3 && g.axes[3]<-0.8, "THB Y Up")
+	evtCtrlLowPressed(c, c.down, g.axes.length>3 && g.axes[3]>0.8, "THB Y Down")
 	// if(!c.firstMsg) {
 	//  	myLog(`${c.name} first evtCtrlLow axes: ${g.hand} ${g.axes.length} ${g.axes[0]} ${g.axes[1]} ${g.axes[2]} ${g.axes[3]}`)
 	//  	c.firstMsg = true
