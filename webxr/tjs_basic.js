@@ -64,15 +64,15 @@ function initCtrl(xr) {
 	//   buttons[] 0:trig 1:grip 2:. 3:thumbPress 4:A/X 5:B/Y
 	//   axis[] 0:X 1:Y for thumbstick
 	const c0=xr.getController( 0 ) // Left
-	c0.addEventListener( 'selectstart', ()=>{move(xr, -1)})
+	c0.addEventListener( 'selectstart', ()=>{moveUser(xr, -1)})
 	// c0.addEventListener( 'selectend', ()=>{})
-	c0.addEventListener( 'squeezestart', ()=>{move(xr, -0.1)})
+	c0.addEventListener( 'squeezestart', ()=>{moveUser(xr, -0.1)})
 	// c0.addEventListener( 'squeezeend', ()=>{})
 
 	const c1=xr.getController( 1 ) // Right
-	c1.addEventListener( 'selectstart', ()=>{move(xr, 1)})
+	c1.addEventListener( 'selectstart', ()=>{moveUser(xr, 1)})
 	// c1.addEventListener( 'selectend', ()=>{})
-	c1.addEventListener( 'squeezestart', ()=>{move(xr, 0.1)})
+	c1.addEventListener( 'squeezestart', ()=>{moveUser(xr, 0.1)})
 	// c1.addEventListener( 'squeezeend', ()=>{})
 }
 
@@ -102,10 +102,7 @@ function rotateUser(xr, angleDeg) {
 	chgRefByOffsetTransfo(xr, transform)
 }
 
-/** walk using the direction of the camera */
-function move(xr, dist) {
-	console.log("move", dist)
-
+function deltaUser(xr, dist) {
 	const xrCamera = xr.getCamera();
 
 	// 2. Extract the forward direction vector
@@ -120,9 +117,21 @@ function move(xr, dist) {
 	// 4. Calculate the horizontal movement delta
 	const delta = forward.multiplyScalar(dist);
 	console.log("XR Direction delta :", delta)
+	return delta
+}
 
-	// 5. Update WebXR Reference Space
-	// setHud(HUD, dist, delta.x, delta.z)
+/** slide perpendicular to the direction of the camera */
+function slideUser(xr, dist) {
+	console.log("slide", dist)
+	const delta = deltaUser(xr, dist)
+	// we just exchange z and x
+	teleportOffsetXZ(xr, delta.z, delta.x)
+}
+
+/** walk using the direction of the camera */
+function moveUser(xr, dist) {
+	console.log("move", dist)
+	const delta = deltaUser(xr, dist)
 	teleportOffsetXZ(xr, delta.x, delta.z)
 }
 
@@ -168,7 +177,7 @@ async function init() {
 	document.body.appendChild(LOG)
 	document.body.appendChild(document.createElement( 'br' ))
 
-	const VERSION = 'C'
+	const VERSION = '--- D ---'
 	myLog(`init version ${VERSION}`)
 
 	const scene = await sceneFromProject("iwsdk/project.json")
@@ -179,7 +188,7 @@ async function init() {
 	scene.add( camera )
 
 	HUD = initHud(camera)
-	setHud(HUD, '---',VERSION,'---')
+	setHud(HUD, '',VERSION,'')
 
 	// above the scene, with color fading from the sky color to the ground color. no shadows https://threejs.org/docs/#HemisphereLight 
 	scene.add( new THREE.HemisphereLight() )
@@ -213,18 +222,18 @@ async function init() {
 		right: initCtrlLow('right',{
 			left:()=>{rotateUser(renderer.xr,-45)},
 			right:()=>{rotateUser(renderer.xr,45)},
-			trig:()=>{move(renderer.xr, 1)},
-			grip:()=>{move(renderer.xr, -1)},
-			by:()=>{move(renderer.xr, 0.1)},
-			ax:()=>{move(renderer.xr, -0.1)}
+			trig:()=>{moveUser(renderer.xr, 1)},
+			grip:()=>{moveUser(renderer.xr, -1)},
+			by:()=>{moveUser(renderer.xr, 0.1)},
+			ax:()=>{moveUser(renderer.xr, -0.1)}
 		}),
 		left: initCtrlLow('left',{
-			trig:()=>{move(renderer.xr, 0.1)},
-			grip:()=>{move(renderer.xr, -0.1)},
-			up:()=>{move(renderer.xr, 0.1)},
-			down:()=>{move(renderer.xr, -0.1)},
-			// left:()=>{rotateUser(renderer.xr,-22.5)},
-			// right:()=>{rotateUser(renderer.xr,22.5)}
+			trig:()=>{moveUser(renderer.xr, 0.1)},
+			grip:()=>{moveUser(renderer.xr, -0.1)},
+			up:()=>{moveUser(renderer.xr, 0.1)},
+			down:()=>{moveUser(renderer.xr, -0.1)},
+			left:()=>{slideUser(renderer.xr,-1)},
+			right:()=>{slideUser(renderer.xr,1)}
 		})
 	}
 	// initCtrl(renderer.xr)
