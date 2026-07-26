@@ -69,61 +69,66 @@ export default class StatsVR {
         const now = this.timer.now();
         const dt = now - this.fpsLastTime;
         this.fpsFrames++;
-        if (now > this.fpsLastTime + this.statsDisplayRefreshDelay) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            //FPS
-            this.fpsLastTime = now;
-            var FPS = ((((this.fpsFrames * 1000) / dt) * 100) / 100).toFixed(2);
-            this.fpsFrames = 0;
-            this.fpsGraphData.push(FPS);
-            if (this.fpsGraphData.length >= 32) {
-                this.fpsGraphData.shift();
+        const delay_ok = (now > this.fpsLastTime + this.statsDisplayRefreshDelay)
+        if(!delay_ok) return
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        //FPS
+        this.fpsLastTime = now;
+        const FPS = ((((this.fpsFrames * 1000) / dt) * 100) / 100).toFixed(2);
+        this.fpsFrames = 0;
+        // add current FPS in data list, keep only 32 values
+        this.fpsGraphData.push(FPS);
+        if (this.fpsGraphData.length >= 32) {
+            this.fpsGraphData.shift();
+        }
+        // histogram of last 32 values, capped using max value
+        let ratio = Math.max.apply(null, this.fpsGraphData);
+        this.ctx.strokeStyle = '#035363';
+        for (let i = 0; i < 32; i++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(i, 16);
+            this.ctx.lineTo(i, (16 - (this.fpsGraphData[i] / ratio) * 16));
+            this.ctx.stroke();
+        }
+        // display latest value
+        this.ctx.font = "13px Calibri";
+        this.ctx.fillStyle = "#00cc00";
+        this.ctx.fillText(FPS, 1, 13);
+        //MS
+        if (this.msActive) {
+            this.msGraphData.push(this.ms);
+            if (this.msGraphData.length >= 32) {
+                this.msGraphData.shift();
             }
-            var ratio = Math.max.apply(null, this.fpsGraphData);
-            this.ctx.strokeStyle = '#035363';
-            for (var i = 0; i < 32; i++) {
+            ratio = Math.max.apply(null, this.msGraphData);
+            this.ctx.strokeStyle = '#f35363';
+            for (let i = 0; i < 32; i++) {
                 this.ctx.beginPath();
-                this.ctx.moveTo(i, 16);
-                this.ctx.lineTo(i, (16 - (this.fpsGraphData[i] / ratio) * 16));
+                this.ctx.moveTo(i + 32, 16);
+                this.ctx.lineTo(i + 32, (16 - (this.msGraphData[i] / ratio) * 16));
                 this.ctx.stroke();
             }
             this.ctx.font = "13px Calibri";
-            this.ctx.fillStyle = "#00cc00";
-            this.ctx.fillText(FPS, 1, 13);
-            //MS
-            if (this.msActive) {
-                this.msGraphData.push(this.ms);
-                if (this.msGraphData.length >= 32) {
-                    this.msGraphData.shift();
-                }
-                ratio = Math.max.apply(null, this.msGraphData);
-                this.ctx.strokeStyle = '#f35363';
-                for (var i = 0; i < 32; i++) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(i + 32, 16);
-                    this.ctx.lineTo(i + 32, (16 - (this.msGraphData[i] / ratio) * 16));
-                    this.ctx.stroke();
-                }
-                this.ctx.font = "13px Calibri";
-                this.ctx.fillStyle = "#00ccff";
-                this.ctx.fillText(this.ms.toFixed(2), 33, 13);
-            }
-            //Custom
-            if (this.custom1) {
-                this.ctx.font = "11px";
-                this.ctx.fillStyle = "#ffffff";
-                this.ctx.fillText(this.custom1, 0, 29);
-            }
-            if (this.custom2) {
-                this.ctx.font = "11px";
-                this.ctx.fillStyle = "#ffffff";
-                this.ctx.fillText(this.custom2, 0, 45);
-            }
-            if (this.custom3) {
-                this.ctx.font = "11px";
-                this.ctx.fillStyle = "#ffffff";
-                this.ctx.fillText(this.custom3, 0, 61);
-            }
+            this.ctx.fillStyle = "#00ccff";
+            this.ctx.fillText(this.ms.toFixed(2), 33, 13);
         }
+        //Custom
+        if (this.custom1) {
+            this.ctx.font = "11px";
+            this.ctx.fillStyle = "#ffffff";
+            this.ctx.fillText(this.custom1, 0, 29);
+        }
+        if (this.custom2) {
+            this.ctx.font = "11px";
+            this.ctx.fillStyle = "#ffffff";
+            this.ctx.fillText(this.custom2, 0, 45);
+        }
+        if (this.custom3) {
+            this.ctx.font = "11px";
+            this.ctx.fillStyle = "#ffffff";
+            this.ctx.fillText(this.custom3, 0, 61);
+        }
+        
     }
 }

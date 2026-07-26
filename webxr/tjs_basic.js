@@ -1,7 +1,9 @@
 import * as THREE from 'https://threejs.org/build/three.module.js'
 // import { VRButton } from 'https://threejs.org/examples/jsm/webxr/VRButton.js'
+import StatsVR from 'https://edukey.github.io/webxr/statsvr.js'
 
 let LOG = null
+let statsVR = null
 
 init()
 
@@ -9,7 +11,6 @@ function myLog(txt) {
   console.log(txt);
   if (LOG) LOG.innerText = txt + "\n" + LOG.innerText;
 }
-
 
 async function sceneFromProject(url) {
   myLog(`Loading ${url} ...`);
@@ -50,6 +51,55 @@ function sceneBasic() {
 	return scene	
 }
 
+/** Controllers button presses */
+function initCtrl(xr) {
+	const c0=xr.getController( 0 )
+	c0.addEventListener( 'selectstart', ()=>{move(xr, 0.1)})
+	c0.addEventListener( 'selectend', ()=>{})
+	c0.addEventListener( 'squeezestart', ()=>{move(xr, 1)})
+	c0.addEventListener( 'squeezeend', ()=>{})
+
+	const c1=xr.getController( 0 )
+	c1.addEventListener( 'selectstart', ()=>{move(xr, -0.1)})
+	c1.addEventListener( 'selectend', ()=>{})
+	c1.addEventListener( 'squeezestart', ()=>{move(xr, -1)})
+	c1.addEventListener( 'squeezeend', ()=>{})
+}
+
+/** walk using the direction of the camera */
+function move(xr, dist) {
+	console.log("move", dist)
+
+	const xrCamera = xr.getCamera();
+
+	// 2. Extract the forward direction vector
+	const forward = new THREE.Vector3();
+	xrCamera.getWorldDirection(forward);
+
+	// 3. Keep current height (flatten Y) and re-normalize
+	forward.y = 0;
+	forward.normalize();
+	console.log("XR Direction on X,Z :", forward)
+
+	// 4. Calculate the horizontal movement delta
+	const delta = forward.multiplyScalar(dist);
+	console.log("XR Direction delta :", delta)
+
+	// 5. Update WebXR Reference Space
+	// Note: WebXR offsets shift the origin, so positions are inverted (-delta)
+	const baseReferenceSpace = xr.getReferenceSpace();
+	console.log("Current XR Ref space :", baseReferenceSpace)
+    const offsetTransform = new XRRigidTransform(
+      { x: -delta.x, y: 0, z: -delta.z, w: 1 }, // Inverse offset
+      { x: 0, y: 0, z: 0, w: 1 }                // No rotation change
+    );
+    const newReferenceSpace = baseReferenceSpace.getOffsetReferenceSpace(offsetTransform);
+	console.log("New XR Ref space to set :", newReferenceSpace)
+
+    xr.setReferenceSpace(newReferenceSpace);
+	console.log("Updated XR Ref space :", xr.getReferenceSpace())
+}
+
 async function init() {
 	// HTML
 	// document.body.appendChild( VRButton.createButton( renderer ) )
@@ -66,24 +116,39 @@ async function init() {
 	// const scene = sceneBasic()
 
 	const camera = new THREE.PerspectiveCamera( 50, 1, 0.1, 10 )
-	camera.position.set( 0, 1.75, 0 )
+	camera.position.set( 0, 1.75, 4 )
 	scene.add( camera )
 
-	scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) )
-	
-	const light = new THREE.DirectionalLight( 0xffffff )
+	// above the scene, with color fading from the sky color to the ground color. no shadows https://threejs.org/docs/#HemisphereLight 
+	scene.add( new THREE.HemisphereLight() )
+
+	// globally illuminates all objects https://threejs.org/docs/#AmbientLight
+	scene.add( new THREE.AmbientLight() )
+
+	// Infinite far away, mandatory for shadows
+	const light = new THREE.DirectionalLight()
 	light.position.set( 1, 1, 1 ).normalize()
 	scene.add( light )
 
-	const vp_width = 500
-	const vp_height = 500
+	// https://threejs.org/docs/#SpotLight
 
-	const renderer = new THREE.WebGLRenderer( { antialias: true } )
+	const vp_width = 800
+	const vp_height = vp_width
+
+	statsVR = new StatsVR(scene, camera)
+	statsVR.setY(1)
+
+	// https://threejs.org/docs/#WebGLRenderer
+	const renderer = new THREE.WebGLRenderer( { antialias: true } ) // will create a canvas as not specified
 	renderer.setPixelRatio( window.devicePixelRatio )
 	renderer.setSize( vp_width, vp_height )
 	renderer.outputEncoding = THREE.sRGBEncoding
-	renderer.setAnimationLoop(()=>{renderer.render( scene, camera )})
+	renderer.setAnimationLoop(()=>{
+		statsVR.update()
+		renderer.render( scene, camera )
+	})
 	renderer.xr.enabled = true
+	initCtrl(renderer.xr)
 	myLog('Renderer done')
 
 	document.body.appendChild( renderer.domElement )
