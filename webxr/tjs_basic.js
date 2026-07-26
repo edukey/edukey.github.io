@@ -220,6 +220,8 @@ async function init() {
 		left: initCtrlLow('left',{
 			trig:()=>{move(renderer.xr, 0.1)},
 			grip:()=>{move(renderer.xr, -0.1)},
+			up:()=>{move(renderer.xr, 0.1)},
+			down:()=>{move(renderer.xr, -0.1)},
 			left:()=>{rotateUser(renderer.xr,22.5)},
 			right:()=>{rotateUser(renderer.xr,-22.5)}
 		})
@@ -311,23 +313,11 @@ function errCtrlLow(errObj, where, e) {
 function evtCtrlLow(c, g) {
 	// https://developer.mozilla.org/en-US/docs/Web/API/Gamepad
 	if(!c) return
-	if(!g) {
-		errCtrlLow(c, 'evtCtrlLow '+c.name, 'No gamepad')
-		return
-	}
+	if(!g) return // possible if XR session not started yet
+	if(!g.buttons)  { errCtrlLow(c, 'evtCtrlLow '+c.name, 'No buttons'); return }
+	if(!g.buttons.length)	{ errCtrlLow(c, 'evtCtrlLow '+c.name, 'Empty buttons array'); return }
 
-	if(!g.buttons)  {
-		errCtrlLow(c, 'evtCtrlLow '+c.name, 'No gamepad buttons')
-		return
-	}
-	if(!g.buttons.length)  {
-		errCtrlLow(c, 'evtCtrlLow '+c.name, 'Zero array gamepad buttons')
-		return
-	}
-
-	// if(!c.firstMsg) {
-	// 	myLog(`${c.name} first evtCtrlLow ...`)
-	// }
+	// if(!c.firstMsg) { myLog(`${c.name} first evtCtrlLow ...`) }
 
   // const _trig = g.buttons[0]
   // const _grip = g.buttons[1]  		
@@ -337,22 +327,13 @@ function evtCtrlLow(c, g) {
 	evtCtrlLowPressed(c, c.ax, g.buttons[4]?.pressed, "A/X")
 	evtCtrlLowPressed(c, c.by, g.buttons[5]?.pressed, "B/Y")
 
-	if(!g.axes) {
-		errCtrlLow(c, 'evtCtrlLow '+c.name, 'No axes')
-		return
-	}
-	if(!g.axes.length) {
-		errCtrlLow(c, 'evtCtrlLow '+c.name, 'Zero array axes')
-		return
-	}
-	if(g.axes.length<2) {
-		errCtrlLow(c, 'evtCtrlLow '+c.name, 'Not at leat two axes, but: '+g.axes.length)
-		return
-	}
-	evtCtrlLowPressed(c, c.left, g.axes.length>2 && g.axes[2]==-1, "THB X Left")
-	evtCtrlLowPressed(c, c.right, g.axes.length>2 && g.axes[2]==1, "THB X Right")
-	evtCtrlLowPressed(c, c.up, g.axes.length>3 && g.axes[3]==-1, "THB Y Up")
-	evtCtrlLowPressed(c, c.down, g.axes.length>3 && g.axes[3]==1, "THB Y Down")
+	if(!g.axes) { errCtrlLow(c, 'evtCtrlLow '+c.name, 'No axes'); return }
+	if(!g.axes.length) { errCtrlLow(c, 'evtCtrlLow '+c.name, 'Empty axes array'); return }
+	if(g.axes.length<2) { errCtrlLow(c, 'evtCtrlLow '+c.name, 'Not at leat two axes, but: '+g.axes.length); return }
+	evtCtrlLowPressed(c, c.left, g.axes.length>2 && g.axes[2]<-0.95, "THB X Left")
+	evtCtrlLowPressed(c, c.right, g.axes.length>2 && g.axes[2]>0.95, "THB X Right")
+	evtCtrlLowPressed(c, c.up, g.axes.length>3 && g.axes[3]<-0.95, "THB Y Up")
+	evtCtrlLowPressed(c, c.down, g.axes.length>3 && g.axes[3]>0.95, "THB Y Down")
 	// if(!c.firstMsg) {
 	//  	myLog(`${c.name} first evtCtrlLow axes: ${g.hand} ${g.axes.length} ${g.axes[0]} ${g.axes[1]} ${g.axes[2]} ${g.axes[3]}`)
 	//  	c.firstMsg = true
