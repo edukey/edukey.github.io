@@ -168,7 +168,8 @@ async function init() {
 	document.body.appendChild(LOG)
 	document.body.appendChild(document.createElement( 'br' ))
 
-	myLog('init')
+	const VERSION = 'C'
+	myLog(`init version ${VERSION}`)
 
 	const scene = await sceneFromProject("iwsdk/project.json")
 	// const scene = sceneBasic()
@@ -178,7 +179,7 @@ async function init() {
 	scene.add( camera )
 
 	HUD = initHud(camera)
-	setHud(HUD, '---','B','---')
+	setHud(HUD, '---',VERSION,'---')
 
 	// above the scene, with color fading from the sky color to the ground color. no shadows https://threejs.org/docs/#HemisphereLight 
 	scene.add( new THREE.HemisphereLight() )
@@ -210,8 +211,8 @@ async function init() {
 	const my_controllers = {
 		firstError: null,
 		right: initCtrlLow('right',{
-			left:()=>{rotateUser(renderer.xr,45)},
-			right:()=>{rotateUser(renderer.xr,-45)},
+			left:()=>{rotateUser(renderer.xr,-45)},
+			right:()=>{rotateUser(renderer.xr,45)},
 			trig:()=>{move(renderer.xr, 1)},
 			grip:()=>{move(renderer.xr, -1)},
 			by:()=>{move(renderer.xr, 0.1)},
@@ -222,8 +223,8 @@ async function init() {
 			grip:()=>{move(renderer.xr, -0.1)},
 			up:()=>{move(renderer.xr, 0.1)},
 			down:()=>{move(renderer.xr, -0.1)},
-			left:()=>{rotateUser(renderer.xr,22.5)},
-			right:()=>{rotateUser(renderer.xr,-22.5)}
+			// left:()=>{rotateUser(renderer.xr,-22.5)},
+			// right:()=>{rotateUser(renderer.xr,22.5)}
 		})
 	}
 	// initCtrl(renderer.xr)
