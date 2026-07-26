@@ -66,6 +66,17 @@ function initCtrl(xr) {
 	c1.addEventListener( 'squeezeend', ()=>{})
 }
 
+/** apply a transform to move the player
+ * https://threejs.org/docs/#WebXRManager.getReferenceSpace
+ * */
+function teleportOffsetTransfo(xr, offsetTransfo) {
+  xr.setReferenceSpace(xr.getReferenceSpace().getOffsetReferenceSpace(offsetTransfo));
+}
+
+function teleportOffsetXZ(xr, delta_x, delta_z) {
+	teleportOffsetTransfo(xr, new XRRigidTransform({ x: -delta_x, y: 0, z: -delta_z, w: 1 }))
+}
+
 /** walk using the direction of the camera */
 function move(xr, dist) {
 	console.log("move", dist)
@@ -86,18 +97,7 @@ function move(xr, dist) {
 	console.log("XR Direction delta :", delta)
 
 	// 5. Update WebXR Reference Space
-	// Note: WebXR offsets shift the origin, so positions are inverted (-delta)
-	const baseReferenceSpace = xr.getReferenceSpace();
-	console.log("Current XR Ref space :", baseReferenceSpace)
-    const offsetTransform = new XRRigidTransform(
-      { x: -delta.x, y: 0, z: -delta.z, w: 1 }, // Inverse offset
-      { x: 0, y: 0, z: 0, w: 1 }                // No rotation change
-    );
-    const newReferenceSpace = baseReferenceSpace.getOffsetReferenceSpace(offsetTransform);
-	console.log("New XR Ref space to set :", newReferenceSpace)
-
-    xr.setReferenceSpace(newReferenceSpace);
-	console.log("Updated XR Ref space :", xr.getReferenceSpace())
+	teleportOffsetXZ(xr, delta.x, delta.z)
 }
 
 async function init() {
