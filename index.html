@@ -1,42 +1,20 @@
----
----
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Test</title>
+<title>EDUKEY home</title>
+<style>
+BODY { font-family: Verdana; font-size: 16pt; text-align: center; }
+</style>
 </head>
 <body>
-Hello from github pages with jekyll. 
-<br/>
-{{site.time}}
-<br/>
-pages : {{site.pages.length}}
-<br/>
-page : dir name path url content
-<br/>
-{% for page in site.pages %}
-page {{forloop.index}}/{{forloop.length}} : <a href="{{page.url}}">{{page.url}}</a><br/>
-{% endfor %}
-<br/>
-{% for kv in site.data %}
-data {{forloop.index}}/{{forloop.length}} : {{kv[0]}}<br/>
-{% for kvs in kv[1] %}
- - data {{forloop.index}}/{{forloop.length}} : {{kvs[0]}}<br/>
-{% endfor %}
-{% endfor %}
-<br/>
-data : {{site.data.stuff.hello}}
-<br/>
-{{site.data.svc.sample.label}}
-<br/>
-{% for kv in site.data.svc %}
-data {{forloop.index}}/{{forloop.length}} : {{kv[0]}} : {{kv[1].code}}
-<br/>
-{% for at in kv[1] %}
-- {{at[0]}}={{at[1]}}
-<br/>
-{% endfor %}
-{% endfor %}
-
+<a href="webxr/index.html">WebXR/</a>
+<br>
+<a href="info.html">Info</a>
+<a href="seq_diag.html">Seq Diag</a>
+<a href="kanban.html">Kanban</a>
+<a href="test_firestore.html">Firestore</a>
+<a href="code-edit.html">Code edit</a>
+<a href="css.html">CSS</a>
+<a href="ghapp.html">GH app</a>
 </body>
 </html>
