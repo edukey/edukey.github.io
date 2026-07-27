@@ -213,6 +213,10 @@ async function init() {
 		right: ctrlInit('right',{
 			left:()=>{userRotate(renderer.xr,-45)},
 			right:()=>{userRotate(renderer.xr,45)},
+			thb:()=>{
+				const obj = scene.getObjectByName('limisano.glb')
+				obj.scale.x = -obj.scale.x
+			},
 			trig:()=>{userMove(renderer.xr, 1)},
 			grip:()=>{userMove(renderer.xr, -1)},
 			by:()=>{userMove(renderer.xr, 0.1)},
